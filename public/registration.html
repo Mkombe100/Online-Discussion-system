@@ -169,17 +169,20 @@
     </section>
 
     <section class="login-panel">
+       <form action="/sign-up" method="POST">
       <h2>Sign up</h2>
       <label for="name">First name</label>
-      <input id="f-name" type="text" name="f-name" autocomplete="f-name" required>
+      <input id="f-name" type="text" name="f_name" autocomplete="f-name" required>
       
       <label for="l-name">Last name</label>
-      <input id="l-name" type="text" name="l-name" autocomplete="l-name" required>
-
-      <form action="/sign-up" method="POST">
-        <label for="email">Email address</label>
-        <input id="email" type="email" name="email" autocomplete="email" required>
-
+      <input id="l-name" type="text" name="l_name" autocomplete="l-name" required>
+      
+      <label for="email">Email address</label>
+      <input id="email" type="email" name="email" autocomplete="email" required>
+         
+       <label for="email">Phone number</label>
+        <input id="email" name="p_number" required>
+         
         <label for="password">Password</label>
         <input id="password" type="password" name="password" autocomplete="current-password" required>
 
