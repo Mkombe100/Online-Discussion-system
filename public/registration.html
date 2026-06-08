@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kimbweta Online | Sign In</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #eef2f6;
+      color: #172033;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .login-shell {
+      width: min(960px, 100%);
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      background: #ffffff;
+      border: 1px solid #d9e1ec;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(20, 34, 55, 0.12);
+    }
+
+    .brand-panel {
+      background: linear-gradient(rgba(19, 39, 67, 0.84), rgba(19, 39, 67, 0.84)), url("bg.png");
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .brand-mark {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand-copy h1 {
+      font-size: 44px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .brand-copy p {
+      max-width: 460px;
+      line-height: 1.7;
+      color: #dbe7f5;
+    }
+
+    .login-panel {
+      padding: 46px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-panel h2 {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .subtext {
+      color: #667085;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #344054;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 13px 14px;
+      font: inherit;
+      outline: none;
+      margin-bottom: 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: #1d4ed8;
+      color: white;
+      font-weight: 700;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .primary-btn:hover {
+      background: #1e40af;
+    }
+
+    .primary-btn:active {
+      transform: translateY(1px);
+    }
+
+    .signup-row {
+      margin-top: 24px;
+      color: #667085;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .signup-row a {
+      color: #1d4ed8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    @media (max-width: 780px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-panel {
+        min-height: 260px;
+        padding: 32px;
+      }
+
+      .brand-copy h1 {
+        font-size: 34px;
+      }
+
+      .login-panel {
+        padding: 34px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="login-shell">
+    <section class="brand-panel">
+      <div class="brand-mark">Kimbweta Online</div>
+      <div class="brand-copy">
+        <h1>Meet, teach, and discuss from anywhere.</h1>
+        <p>Create quick meetings, organize study groups, and invite people with simple room or group codes.</p>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <h2>Sign up</h2>
+      <label for="name">First name</label>
+      <input id="f-name" type="text" name="f-name" autocomplete="f-name" required>
+      
+      <label for="l-name">Last name</label>
+      <input id="l-name" type="text" name="l-name" autocomplete="l-name" required>
+
+      <form action="/sign-up" method="POST">
+        <label for="email">Email address</label>
+        <input id="email" type="email" name="email" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" required>
+
+        <button class="primary-btn" type="submit">Sign in</button>
+      </form>
+
+      <p class="signup-row">have an account? <a href="/login">log in</a></p>
+    </section>
+  </main>
+</body>
+</html>

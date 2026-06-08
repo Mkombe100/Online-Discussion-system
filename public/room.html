@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimbweta Meeting</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="meeting-shell">
+    <header class="meeting-header">
+        <div>
+            <p class="label">Live meeting</p>
+            <h1>Room <span id="roomCodeLabel">----</span></h1>
+        </div>
+        <div class="header-actions">
+            <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
+            <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
+                <i class="fa-solid fa-link"></i>
+                Invite
+            </button>
+        </div>
+    </header>
+
+    <main class="meeting-main">
+        <section class="stage">
+            <video id="localVideo" autoplay playsinline muted class="AA"></video>
+            <div class="video-badge">You</div>
+            <p class="camera-message" id="cameraMessage">Starting camera...</p>
+        </section>
+
+        <aside class="participants-panel">
+            <div class="panel-heading">
+                <h2>Participants</h2>
+                <span id="remoteCount">0 online</span>
+            </div>
+            <div class="participants" id="participants"></div>
+        </aside>
+    </main>
+
+    <footer class="controls">
+        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
+            <i class="fa-solid fa-microphone"></i>
+            <span>Mic</span>
+        </button>
+
+        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
+            <i class="fa-solid fa-video"></i>
+            <span>Camera</span>
+        </button>
+
+        <button class="but-con" id="screenBtn" type="button" title="Share screen">
+            <i class="fa-solid fa-display"></i>
+            <span>Share</span>
+        </button>
+
+        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
+        </button>
+
+        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
+            <i class="fa-solid fa-phone"></i>
+            <span>Leave</span>
+        </button>
+    </footer>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="room.js"></script>
+</body>
+</html>

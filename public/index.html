@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Kimbweta Online</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    /* professional card */
+    .office-card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      width: 100%;
+      max-width: 480px;
+      padding: 2rem 2rem 2.25rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 520px) {
+      .office-card {
+        padding: 1.5rem;
+      }
+    }
+
+    /* header */
+    .app-header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .app-header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+      margin-bottom: 0.25rem;
+    }
+
+    .app-header p {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    /* tab navigation */
+    .tab-bar {
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.25rem;
+      margin-bottom: 1.75rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0.6rem 0;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      color: #475569;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: #1e40af;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      border: 0.5px solid #e2e8f0;
+    }
+
+    /* panels */
+    .panel {
+      display: none;
+    }
+
+    .panel.active-panel {
+      display: block;
+    }
+
+    /* form elements */
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .code-input {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+      font-size: 1.25rem;
+      font-weight: 500;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 2px;
+      color: #0f172a;
+      text-align: center;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .code-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .code-input::placeholder {
+      font-size: 1rem;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .helper-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .random-link {
+      background: none;
+      border: none;
+      font-size: 0.7rem;
+      color: #3b82f6;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-family: inherit;
+    }
+
+    .random-link:hover {
+      background: #eff6ff;
+      text-decoration: underline;
+    }
+
+    /* action button */
+    .action-btn {
+      width: 100%;
+      background: #1e40af;
+      border: none;
+      padding: 0.85rem 0;
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+      margin-top: 0.25rem;
+    }
+
+    .action-btn:hover {
+      background: #1e3a8a;
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* create panel info box */
+    .info-box {
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .info-box p {
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 450;
+    }
+
+    .info-hint {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+    }
+
+    /* footer */
+    .footer-meta {
+      margin-top: 1.75rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 1.25rem;
+    }
+
+    /* remove spinner for number inputs */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="office-card">
+  <div class="app-header">
+    <h1>KIMBWETA ONLINE</h1>
+    <p>Distance isn't an issue</p>
+  </div>
+
+  <!-- tab navigation: join / create -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-panel="join">Join Room</button>
+    <button class="tab-btn" data-panel="create">Create Room</button>
+  </div>
+
+  <!-- JOIN PANEL: only room code input -->
+  <div id="joinPanel" class="panel active-panel">
+    <div class="input-group">
+      <label>Room code</label>
+      <input type="text" id="roomCodeInput" class="code-input" placeholder="12345" inputmode="numeric" maxlength="6" autocomplete="off">
+      <div class="helper-row">
+        <button type="button" id="randomCodeBtn" class="random-link">Generate random code</button>
+      </div>
+    </div>
+    <button id="joinActionBtn" class="action-btn">Join Room</button>
+  </div>
+
+  <!-- CREATE PANEL: minimal, no title -->
+  <div id="createPanel" class="panel">
+    <div class="info-box">
+      <p>Create a new meeting room</p>
+      <div class="info-hint">A unique 5-digit room code will be generated automatically</div>
+    </div>
+    <button id="createActionBtn" class="action-btn">Create Room</button>
+  </div>
+
+  <div class="footer-meta">
+    Powered by Jani Codes && jani Technologies
+  </div>
+</div>
+
+<script>
+  (function() {
+    // DOM elements
+    const joinPanel = document.getElementById('joinPanel');
+    const createPanel = document.getElementById('createPanel');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const roomCodeInput = document.getElementById('roomCodeInput');
+    const joinBtn = document.getElementById('joinActionBtn');
+    const createBtn = document.getElementById('createActionBtn');
+    const randomCodeBtn = document.getElementById('randomCodeBtn');
+
+    // Helper: generate 5-digit room code (10000-99999)
+    function generateRandomRoomCode() {
+      return Math.floor(10000 + Math.random() * 90000);
+    }
+
+    // Validate room code: digits only, between 1-999999
+    function validateRoomCode(rawValue) {
+      let cleaned = rawValue.trim();
+      if (cleaned === "") return null;
+      if (!/^\d+$/.test(cleaned)) return null;
+      let num = parseInt(cleaned, 10);
+      if (isNaN(num)) return null;
+      if (num < 1 || num > 999999) return null;
+      return num;
+    }
+
+    // Navigate to room.html with only room parameter (no title)
+    function navigateToRoom(roomNumber) {
+      if (roomNumber === null || roomNumber === undefined) {
+        alert("Invalid room code");
+        return false;
+      }
+      const numericRoom = parseInt(roomNumber, 10);
+      if (isNaN(numericRoom) || numericRoom <= 0) {
+        alert("Please enter a valid room code (numbers only)");
+        return false;
+      }
+      const url = `/room.html?room=${encodeURIComponent(numericRoom)}`;
+      window.location.href = url;
+      return true;
+    }
+
+    // Join handler
+    function handleJoin() {
+      let rawCode = roomCodeInput.value;
+      if (!rawCode) {
+        alert("Please enter a room code");
+        roomCodeInput.style.borderColor = "#ef4444";
+        setTimeout(() => {
+          roomCodeInput.style.borderColor = "";
+        }, 1000);
+        return;
+      }
+      const validRoom = validateRoomCode(rawCode);
+      if (validRoom === null) {
+        alert("Room code must contain only numbers (example: 48213)");
+        roomCodeInput.style.borderColor = "#ef4444";
+        setTimeout(() => {
+          roomCodeInput.style.borderColor = "";
+        }, 1000);
+        return;
+      }
+      navigateToRoom(validRoom);
+    }
+
+    // Create handler: generate random room, no title
+    function handleCreate() {
+      const newRoomCode = generateRandomRoomCode();
+      navigateToRoom(newRoomCode);
+    }
+
+    // Fill random code into join input
+    function fillRandomCode() {
+      const randomCode = generateRandomRoomCode();
+      roomCodeInput.value = randomCode;
+      roomCodeInput.style.borderColor = "#3b82f6";
+      setTimeout(() => {
+        roomCodeInput.style.borderColor = "";
+      }, 500);
+    }
+
+    // Tab switching (professional interface)
+    function switchToPanel(panelId) {
+      if (panelId === 'join') {
+        joinPanel.classList.add('active-panel');
+        createPanel.classList.remove('active-panel');
+        tabBtns.forEach(btn => {
+          if (btn.getAttribute('data-panel') === 'join') {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+        setTimeout(() => {
+          roomCodeInput.focus();
+        }, 50);
+      } else if (panelId === 'create') {
+        joinPanel.classList.remove('active-panel');
+        createPanel.classList.add('active-panel');
+        tabBtns.forEach(btn => {
+          if (btn.getAttribute('data-panel') === 'create') {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+    }
+
+    // Event listeners for tabs
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-panel');
+        switchToPanel(target);
+      });
+    });
+
+    // Button events
+    joinBtn.addEventListener('click', handleJoin);
+    createBtn.addEventListener('click', handleCreate);
+    randomCodeBtn.addEventListener('click', fillRandomCode);
+
+    // Enter key in room code input triggers join
+    roomCodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleJoin();
+      }
+    });
+
+    // Input sanitization: allow only digits, max length 6
+    roomCodeInput.addEventListener('input', (e) => {
+      let value = roomCodeInput.value;
+      value = value.replace(/[^0-9]/g, '');
+      if (value.length > 6) value = value.slice(0, 6);
+      roomCodeInput.value = value;
+    });
+
+    // Set a random placeholder example (non-intrusive)
+    const exampleCode = generateRandomRoomCode();
+    roomCodeInput.placeholder = `${exampleCode}`;
+
+    // Ensure initial state: join panel active
+    switchToPanel('join');
+  })();
+</script>
+</body>
+</html>
