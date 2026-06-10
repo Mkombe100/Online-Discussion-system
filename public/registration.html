@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kimbweta Online | Sign In</title>
+  <title>Sign Up</title>
   <style>
     * {
       box-sizing: border-box;
@@ -105,6 +105,23 @@
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
+    input.error {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 12px;
+      margin-top: -14px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
     .primary-btn {
       width: 100%;
       border: 0;
@@ -115,6 +132,7 @@
       padding: 14px 16px;
       cursor: pointer;
       transition: background 0.2s, transform 0.2s;
+      font-size: 16px;
     }
 
     .primary-btn:hover {
@@ -123,6 +141,11 @@
 
     .primary-btn:active {
       transform: translateY(1px);
+    }
+
+    .primary-btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
     }
 
     .signup-row {
@@ -136,6 +159,55 @@
       color: #1d4ed8;
       font-weight: 700;
       text-decoration: none;
+    }
+
+    .signup-row a:hover {
+      text-decoration: underline;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .alert.success {
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .alert.warning {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     @media (max-width: 780px) {
@@ -169,28 +241,207 @@
     </section>
 
     <section class="login-panel">
-       <form action="/sign-up" method="POST">
-      <h2>Sign up</h2>
-      <label for="name">First name</label>
-      <input id="f-name" type="text" name="f_name" autocomplete="f-name" required>
-      
-      <label for="l-name">Last name</label>
-      <input id="l-name" type="text" name="l_name" autocomplete="l-name" required>
-      
-      <label for="email">Email address</label>
-      <input id="email" type="email" name="email" autocomplete="email" required>
-         
-       <label for="email">Phone number</label>
-        <input id="email" name="p_number" required>
-         
-        <label for="password">Password</label>
-        <input id="password" type="password" name="password" autocomplete="current-password" required>
+      <div id="alertBox" class="alert"></div>
 
-        <button class="primary-btn" type="submit">Sign in</button>
+      <form id="signupForm">
+        <h2>Sign up</h2>
+        <p class="subtext">Create your account to get started</p>
+
+        <div>
+          <label for="f-name">First name</label>
+          <input id="f-name" type="text" name="f_name" placeholder="John" autocomplete="given-name" required>
+          <div class="error-message"></div>
+        </div>
+
+        <div>
+          <label for="l-name">Last name</label>
+          <input id="l-name" type="text" name="l_name" placeholder="Doe" autocomplete="family-name" required>
+          <div class="error-message"></div>
+        </div>
+
+        <div>
+          <label for="email">Email address</label>
+          <input id="email" type="email" name="email" placeholder="john@example.com" autocomplete="email" required>
+          <div class="error-message"></div>
+        </div>
+
+        <div>
+          <label for="p-number">Phone number</label>
+          <input id="p-number" type="tel" name="p_number" placeholder="+1 (555) 000-0000" autocomplete="tel" required>
+          <div class="error-message"></div>
+        </div>
+
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" placeholder="Enter a strong password" autocomplete="new-password" required>
+          <div class="error-message"></div>
+        </div>
+
+        <button class="primary-btn" type="submit">
+          <span id="btnText">Create Account</span>
+        </button>
       </form>
 
-      <p class="signup-row">have an account? <a href="/login">log in</a></p>
+      <p class="signup-row">Already have an account? <a href="/login">Log in</a></p>
     </section>
   </main>
+
+  <script>
+    const form = document.getElementById('signupForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const btnText = document.getElementById('btnText');
+
+    // Show alert message
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = `alert show ${type}`;
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Hide alert message
+    function hideAlert() {
+      alertBox.classList.remove('show');
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    // Validate phone number (basic)
+    function isValidPhone(phone) {
+      const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+      return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
+    }
+
+    // Validate password strength
+    function isStrongPassword(password) {
+      return password.length >= 8;
+    }
+
+    // Clear error styling
+    function clearErrors() {
+      form.querySelectorAll('input').forEach(input => {
+        input.classList.remove('error');
+        const errorMsg = input.parentElement.querySelector('.error-message');
+        if (errorMsg) errorMsg.classList.remove('show');
+      });
+    }
+
+    // Show field error
+    function showFieldError(fieldName, message) {
+      const input = form.querySelector(`[name="${fieldName}"]`);
+      if (input) {
+        input.classList.add('error');
+        const errorMsg = input.parentElement.querySelector('.error-message');
+        if (errorMsg) {
+          errorMsg.textContent = message;
+          errorMsg.classList.add('show');
+        }
+      }
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+      hideAlert();
+
+      // Get form data
+      const formData = new FormData(form);
+      const data = {
+        f_name: formData.get('f_name').trim(),
+        l_name: formData.get('l_name').trim(),
+        email: formData.get('email').trim(),
+        p_number: formData.get('p_number').trim(),
+        password: formData.get('password')
+      };
+
+      // Validation
+      let hasErrors = false;
+
+      if (!data.f_name) {
+        showFieldError('f_name', 'First name is required');
+        hasErrors = true;
+      }
+
+      if (!data.l_name) {
+        showFieldError('l_name', 'Last name is required');
+        hasErrors = true;
+      }
+
+      if (!data.email) {
+        showFieldError('email', 'Email is required');
+        hasErrors = true;
+      } else if (!isValidEmail(data.email)) {
+        showFieldError('email', 'Please enter a valid email');
+        hasErrors = true;
+      }
+
+      if (!data.p_number) {
+        showFieldError('p_number', 'Phone number is required');
+        hasErrors = true;
+      } else if (!isValidPhone(data.p_number)) {
+        showFieldError('p_number', 'Please enter a valid phone number');
+        hasErrors = true;
+      }
+
+      if (!data.password) {
+        showFieldError('password', 'Password is required');
+        hasErrors = true;
+      } else if (!isStrongPassword(data.password)) {
+        showFieldError('password', 'Password must be at least 8 characters');
+        hasErrors = true;
+      }
+
+      if (hasErrors) return;
+
+      // Disable submit button and show loading state
+      submitBtn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span>Creating account...';
+
+      try {
+        const response = await fetch('/sign-up', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('✓ ' + result.message, 'success');
+          form.reset();
+          
+          // Redirect to login after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          showAlert('✗ ' + result.message, 'error');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Create Account';
+        }
+
+      } catch (err) {
+        showAlert('✗ Registration failed: ' + err.message, 'error');
+        submitBtn.disabled = false;
+        btnText.textContent = 'Create Account';
+      }
+    });
+
+    // Real-time validation on input
+    form.querySelectorAll('input').forEach(input => {
+      input.addEventListener('blur', () => {
+        if (input.value.trim()) {
+          input.classList.remove('error');
+          const errorMsg = input.parentElement.querySelector('.error-message');
+          if (errorMsg) errorMsg.classList.remove('show');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
