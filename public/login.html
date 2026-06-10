@@ -105,6 +105,23 @@
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
+    input.error {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 12px;
+      margin-top: -14px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
     .primary-btn {
       width: 100%;
       border: 0;
@@ -115,6 +132,7 @@
       padding: 14px 16px;
       cursor: pointer;
       transition: background 0.2s, transform 0.2s;
+      font-size: 16px;
     }
 
     .primary-btn:hover {
@@ -123,6 +141,11 @@
 
     .primary-btn:active {
       transform: translateY(1px);
+    }
+
+    .primary-btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
     }
 
     .signup-row {
@@ -136,6 +159,49 @@
       color: #1d4ed8;
       font-weight: 700;
       text-decoration: none;
+    }
+
+    .signup-row a:hover {
+      text-decoration: underline;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .alert.success {
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     @media (max-width: 780px) {
@@ -169,21 +235,141 @@
     </section>
 
     <section class="login-panel">
-      <h2>Sign in</h2>
-      <p class="subtext">Access your dashboard and start a meeting in seconds.</p>
+      <div id="alertBox" class="alert"></div>
 
-      <form action="/login" method="POST">
-        <label for="email">Email address</label>
-        <input id="email" type="email" name="email" autocomplete="email" required>
+      <form id="loginForm">
+        <h2>Sign in</h2>
+        <p class="subtext">Access your dashboard and start a meeting in seconds.</p>
 
-        <label for="password">Password</label>
-        <input id="password" type="password" name="password" autocomplete="current-password" required>
+        <div>
+          <label for="email">Email address</label>
+          <input id="email" type="email" name="email" autocomplete="email" required>
+          <div class="error-message"></div>
+        </div>
 
-        <button class="primary-btn" type="submit">Sign in</button>
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" autocomplete="current-password" required>
+          <div class="error-message"></div>
+        </div>
+
+        <button class="primary-btn" type="submit">
+          <span id="btnText">Sign in</span>
+        </button>
       </form>
 
       <p class="signup-row">New to Kimbweta? <a href="/sign-up">Create an account</a></p>
     </section>
   </main>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const btnText = document.getElementById('btnText');
+
+    // Show alert message
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = `alert show ${type}`;
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Hide alert message
+    function hideAlert() {
+      alertBox.classList.remove('show');
+    }
+
+    // Clear error styling
+    function clearErrors() {
+      form.querySelectorAll('input').forEach(input => {
+        input.classList.remove('error');
+        const errorMsg = input.parentElement.querySelector('.error-message');
+        if (errorMsg) errorMsg.classList.remove('show');
+      });
+    }
+
+    // Show field error
+    function showFieldError(fieldName, message) {
+      const input = form.querySelector(`[name="${fieldName}"]`);
+      if (input) {
+        input.classList.add('error');
+        const errorMsg = input.parentElement.querySelector('.error-message');
+        if (errorMsg) {
+          errorMsg.textContent = message;
+          errorMsg.classList.add('show');
+        }
+      }
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+      hideAlert();
+
+      // Get form data
+      const formData = new FormData(form);
+      const data = {
+        email: formData.get('email').trim(),
+        password: formData.get('password')
+      };
+
+      // Basic validation
+      if (!data.email) {
+        showFieldError('email', 'Email is required');
+        return;
+      }
+
+      if (!data.password) {
+        showFieldError('password', 'Password is required');
+        return;
+      }
+
+      // Disable submit button and show loading state
+      submitBtn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span>Signing in...';
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('✓ ' + result.message, 'success');
+          form.reset();
+          
+          // Redirect to dashboard
+          setTimeout(() => {
+            window.location.href = result.redirect || '/dashboard';
+          }, 1500);
+        } else {
+          showAlert('✗ ' + result.message, 'error');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Sign in';
+        }
+
+      } catch (err) {
+        showAlert('✗ Sign in failed: ' + err.message, 'error');
+        submitBtn.disabled = false;
+        btnText.textContent = 'Sign in';
+      }
+    });
+
+    // Real-time validation on input
+    form.querySelectorAll('input').forEach(input => {
+      input.addEventListener('blur', () => {
+        if (input.value.trim()) {
+          input.classList.remove('error');
+          const errorMsg = input.parentElement.querySelector('.error-message');
+          if (errorMsg) errorMsg.classList.remove('show');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
