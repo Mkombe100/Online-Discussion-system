@@ -13,7 +13,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Parse JSON and URL-encoded request bodies
+app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
