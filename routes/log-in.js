@@ -13,7 +13,10 @@ router.post("/login", async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).send("User not found");
+      return res.status(400).json({ 
+        success: false, 
+        message: "User not found" 
+      });
     }
 
     const user = result.rows[0];
@@ -22,13 +25,25 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).send("Invalid password");
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid password" 
+      });
     }
 
-     return res.redirect("/dashboard");
-     
+    // Return success response with redirect info
+    return res.status(200).json({ 
+      success: true, 
+      message: "Login successful",
+      redirect: "/dashboard"
+    });
+      
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error("Login error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Login failed. Please try again." 
+    });
   }
 });
 
