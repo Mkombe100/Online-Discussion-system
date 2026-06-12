@@ -1,3 +1,3 @@
 npm init -y
-npm install express socket.io pg
+npm install express socket.io pg ejs
 node server/index.js
