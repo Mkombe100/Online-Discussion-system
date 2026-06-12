@@ -109,7 +109,7 @@ app.get('/dashboard', (req, res) => {
 app.use(createGroup);
 
 app.get('/createRoom', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+  res.render('dashboard');  // ONLY CHANGE: changed from sendFile with .html to render with .ejs
 });
 
 // ===== START SERVER =====
