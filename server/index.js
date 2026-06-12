@@ -7,7 +7,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'public'));
 
 // Parse JSON and URL-encoded request bodies
-app.use(express.json());
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 
 const register = require('../routes/registration');
