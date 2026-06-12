@@ -90,7 +90,10 @@ app.get('/sign-up', (req, res) => {
 app.use(login);
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+  if (req.session.user) {
+    return res.redirect('/dashboard');
+  }
+  res.render('login'); // or send login page
 });
 
 app.get('/dashboard', (req, res) => {
