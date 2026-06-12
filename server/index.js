@@ -2,6 +2,14 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 
+// EJS setup
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '..', 'public'));
+
+// Parse JSON and URL-encoded request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const register = require('../routes/registration');
 const login = require('../routes/log-in');
 const createRoom = require('../routes/createRoom');
@@ -74,7 +82,13 @@ app.get('/login', (req, res) => {
 
 
 app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  res.render('dashboard', {
+    username: req.session.user.username
+  });
 });
 
 app.use(createGroup);
