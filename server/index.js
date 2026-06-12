@@ -1,13 +1,30 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const { Server } = require("socket.io");
+const session = require("express-session");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// ===== SESSION SETUP =====
+app.use(session({
+  secret: "your_secret_key_here",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    maxAge: 1000 * 60 * 60 // 1 hour
+  }
+}));
 
 // EJS setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'public'));
 
 // Parse JSON and URL-encoded request bodies
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const register = require('../routes/registration');
@@ -15,23 +32,17 @@ const login = require('../routes/log-in');
 const createRoom = require('../routes/createRoom');
 const createGroup = require('../routes/createGroup');
 
-const path = require('path');
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
-// Parse JSON and URL-encoded request bodies
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
+// Home route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
+// Static files
 app.use(express.static("public", { index: false }));
 
+// ===== SOCKET.IO =====
 const rooms = {};
+
 io.on("connection", (socket) => {
 
   socket.on("join-room", (roomId) => {
@@ -69,17 +80,18 @@ io.on("connection", (socket) => {
 
 });
 
-//System requirements
+// ===== ROUTES =====
 app.use(register);
-app.get('/sign-up' , (req, res)=>{
-    res.sendFile(path.join(__dirname, '..', 'public', 'registration.html'));
+
+app.get('/sign-up', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'registration.html'));
 });
 
 app.use(login);
+
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
-
 
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) {
@@ -92,11 +104,12 @@ app.get('/dashboard', (req, res) => {
 });
 
 app.use(createGroup);
+
 app.get('/createRoom', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
-
+// ===== START SERVER =====
 const PORT = process.env.PORT || 3030;
 
 server.listen(PORT, () => {
