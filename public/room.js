@@ -189,7 +189,6 @@ function createVideo(id) {
 
   return video;
 }
-
 /* CREATE PEER CONNECTION */
 function createPeer(id) {
   const pc = new RTCPeerConnection(config);
