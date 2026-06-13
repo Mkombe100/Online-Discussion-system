@@ -177,6 +177,13 @@ function createVideo(id) {
   video.className = "part-videos";
   video.id = id;
 
+  // Click participant video to expand
+  video.addEventListener("click", () => {
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    }
+  });
+
   participants.appendChild(video);
   updateParticipantCount();
 
