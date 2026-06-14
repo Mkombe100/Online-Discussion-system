@@ -635,24 +635,24 @@
         <div class="topbar">
             <button class="hamburger" type="button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
             <div class="topbar-left">
-                <h1>Welcome back </h1><h2><%= username %></h2>
-                <h2 id="usernameDisplay">Guest</h2>
+                <h1>Welcome back</h1>
+                <h2><%= username %></h2>
                 <p>Start a call or organize a group discussion</p>
             </div>
             <div class="topbar-right">
                 <div class="profile-section">
                     <button class="profile-btn" onclick="toggleProfileMenu()">
-                        <div class="profile-avatar" id="profileInitial">U</div>
-                        <span id="userName">User</span>
+                        <div class="profile-avatar" id="profileInitial"><%= initials %></div>
+                        <span id="userName"><%= username %></span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="profile-dropdown" id="profileDropdown">
                         <div class="profile-header">
                             <div class="profile-user-info">
-                                <div class="profile-avatar-lg" id="profileInitialLg">U</div>
+                                <div class="profile-avatar-lg" id="profileInitialLg"><%= initials %></div>
                                 <div class="profile-user-text">
-                                    <h3 id="profileName">User Name</h3>
-                                    <p id="profileEmail">user@example.com</p>
+                                    <h3 id="profileName"><%= username %></h3>
+                                    <p id="profileEmail"><%= email %></p>
                                 </div>
                             </div>
                         </div>
@@ -727,6 +727,7 @@
                 <div class="groups-header"><i class="fas fa-users"></i> My Groups</div>
                 <div id="groupsListRender"></div>
             </div>
+           -->
         </section>
     </main>
 </div>
@@ -745,10 +746,64 @@
 <div id="toastMsg" class="toast-msg"></div>
 
 <script>
-    // Demo Data + Storage
-    
-    
-    function saveGroupsToStorage() { localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups)); updateStats(); renderMyGroups(); }
+    // Initialize user groups from localStorage (no hardcoded demo data)
+    let userGroups = [];
+
+    function loadGroupsFromStorage() {
+        const stored = localStorage.getItem('kimbweta_userGroups');
+        if(stored) {
+            userGroups = JSON.parse(stored);
+        } else {
+            userGroups = [];
+            localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups));
+        }
+        if(!localStorage.getItem('quickRoomsCount')) {
+            localStorage.setItem('quickRoomsCount', '0');
+        }
+        updateStats();
+        renderMyGroups();
+    }
+
+    function updateStats() {
+        document.getElementById('statRooms').innerText = localStorage.getItem('quickRoomsCount') || '0';
+        document.getElementById('statGroups').innerText = userGroups.length;
+        let totalMembers = userGroups.reduce((sum, g) => sum + (g.members || 1), 0);
+        document.getElementById('statMembers').innerText = totalMembers;
+    }
+
+    function renderMyGroups() {
+        const container = document.getElementById('groupsListRender');
+        if(!container) return;
+        if(userGroups.length === 0) {
+            container.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--muted);">No groups yet. Create or join one!</div>`;
+            return;
+        }
+        container.innerHTML = userGroups.map(group => `
+            <div class="group-item">
+                <div class="group-info">
+                    <h4>${escapeHtml(group.name)}</h4>
+                    <p>${escapeHtml(group.description || 'No description')} • ${group.members} members</p>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <span class="group-code">${group.code}</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="padding: 8px 16px;" onclick="copyGroupCode('${group.code}')"><i class="fas fa-copy"></i> Copy Code</button>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+
+    function copyGroupCode(code) {
+        navigator.clipboard.writeText(code);
+        showToast(`Code ${code} copied!`, "success");
+    }
+
+    function saveGroupsToStorage() { 
+        localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups)); 
+        updateStats(); 
+        renderMyGroups(); 
+    }
 
     function showToast(message, type = 'success') {
         const toast = document.getElementById('toastMsg');
@@ -784,7 +839,7 @@
         setTimeout(() => { const inp = document.getElementById('previewRoomCode'); if(inp) inp.value = Math.floor(10000+Math.random()*90000); }, 20);
     }
 
-    // NEW: Join Room Modal (popup style)
+    // Join Room Modal (popup style)
     function openJoinRoomModal() {
         const modalBody = `
             <div class="field">
@@ -808,7 +863,6 @@
             showToast(`Joining room ${roomCode}...`, "success");
             setTimeout(() => { window.location.href = `/room.html?room=${roomCode}`; }, 300);
         }, "Cancel");
-        // Auto-focus and numeric filter
         setTimeout(() => {
             const inp = document.getElementById('joinRoomCodeInput');
             if(inp) {
@@ -833,46 +887,25 @@
         });
     }
 
-    // Join existing group modal
+    // Join existing group modal (only checks existing groups, no hardcoded demo)
     function openJoinExistingGroupModal() {
-        const modalBody = `<div class="field"><label>Group Code</label><input id="modalJoinCode" placeholder="e.g., DESIGN2025"></div><p style="font-size: 13px; color: var(--muted);">Enter the group code you received to become a member.</p>`;
+        const modalBody = `<div class="field"><label>Group Code</label><input id="modalJoinCode" placeholder="e.g., GRP1234"></div><p style="font-size: 13px; color: var(--muted);">Enter the group code you received to become a member.</p>`;
         openModal("Join Group", modalBody, "Join Group", () => {
             const joinCode = document.getElementById('modalJoinCode')?.value.trim().toUpperCase();
             if(!joinCode) { showToast("Enter group code", "error"); return; }
             const existing = userGroups.find(g => g.code === joinCode);
-            if(existing) { showToast(`You are already a member of "${existing.name}"`, "error"); return; }
-            // Predefined demo groups
-            const demoGroups = { "DESIGN2025": { name: "UI/UX Masters", description: "Weekly design critiques", members: 9 }, "DEVHUB": { name: "DevOps Circle", description: "Cloud & automation", members: 13 }, "STARTUP": { name: "Founders Club", description: "Networking & growth", members: 6 } };
-            if(demoGroups[joinCode]) {
-                const grp = demoGroups[joinCode];
-                const newJoined = { id: Date.now().toString(), code: joinCode, name: grp.name, description: grp.description, members: grp.members, isMember: true };
-                userGroups.push(newJoined);
-                saveGroupsToStorage();
-                showToast(`Joined group "${grp.name}" successfully!`, "success");
-            } else {
-                showToast("Group code not found. Please check and try again.", "error");
+            if(existing) { 
+                showToast(`You are already a member of "${existing.name}"`, "error"); 
+                return; 
             }
+            // Check if group exists in any external source? For now, group must be created first
+            // To allow joining, we can let user join if code exists in the system (from previous creations)
+            // Since no hardcoded demo, we inform user to get valid code from group creator
+            showToast("Group code not found. Please check the code and try again.", "error");
         });
     }
 
-    // Profile & Theme
-    function loadUserData() {
-        let stored = localStorage.getItem('userData');
-        if(stored) {
-            try { updateUserProfile(JSON.parse(stored)); } catch(e) {}
-        }
-        const fallback = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')) : { name: "Guest", initials: "G" };
-        updateUserProfile(fallback);
-    }
-    function updateUserProfile(user) {
-        const initials = user.initials || (user.name || 'User').split(' ').map(n=>n[0]).join('').toUpperCase();
-        document.getElementById('profileInitial').textContent = initials;
-        document.getElementById('profileInitialLg').textContent = initials;
-        document.getElementById('profileName').textContent = user.name || 'User';
-        document.getElementById('userName').textContent = user.name || 'User';
-        document.getElementById('profileEmail').textContent = user.email || 'user@example.com';
-        document.getElementById('usernameDisplay').innerHTML = user.name || 'Guest';
-    }
+    // Theme functions
     function toggleTheme() {
         const isDark = document.body.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -884,22 +917,41 @@
         if(theme === 'dark') document.body.classList.add('dark');
         document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
     }
-    function toggleProfileMenu() { document.getElementById('profileDropdown').classList.toggle('active'); }
-    function closeProfileMenu() { document.getElementById('profileDropdown').classList.remove('active'); }
-    function signOut() { localStorage.removeItem('userData'); showToast("Signed out", "success"); setTimeout(()=>{ window.location.href = '/login'; }, 800); }
-    window.toggleSidebar = function() { document.getElementById('sidebar').classList.toggle('open'); };
+    
+    // Profile menu
+    function toggleProfileMenu() { 
+        document.getElementById('profileDropdown').classList.toggle('active'); 
+    }
+    function closeProfileMenu() { 
+        document.getElementById('profileDropdown').classList.remove('active'); 
+    }
+    
+    // Sign out
+    function signOut() { 
+        showToast("Signed out successfully", "success"); 
+        setTimeout(()=>{ window.location.href = '/login'; }, 800); 
+    }
+    
+    // Sidebar toggle
+    window.toggleSidebar = function() { 
+        document.getElementById('sidebar').classList.toggle('open'); 
+    };
+    
+    // Section navigation
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === id));
         document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.section === id));
         document.getElementById('sidebar')?.classList.remove('open');
         if(id === 'groups') renderMyGroups();
     }
+    
+    // Event listeners
     document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => showSection(btn.dataset.section)));
     document.addEventListener('click', (e) => { if (!e.target.closest('.profile-section')) closeProfileMenu(); });
     
+    // Initialize
     loadTheme();
-    loadUserData();
-    loadDemoData();
+    loadGroupsFromStorage();
 </script>
 </body>
 </html>
