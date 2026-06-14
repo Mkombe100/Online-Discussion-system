@@ -642,17 +642,17 @@
             <div class="topbar-right">
                 <div class="profile-section">
                     <button class="profile-btn" onclick="toggleProfileMenu()">
-                        <div class="profile-avatar" id="profileInitial"><%= initials %></div>
-                        <span id="userName"><%= username %></span>
+                        <div class="profile-avatar" id="profileInitial"></div>
+                        <span id="userName"></span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="profile-dropdown" id="profileDropdown">
                         <div class="profile-header">
                             <div class="profile-user-info">
-                                <div class="profile-avatar-lg" id="profileInitialLg"><%= initials %></div>
+                                <div class="profile-avatar-lg" id="profileInitialLg"></div>
                                 <div class="profile-user-text">
-                                    <h3 id="profileName"><%= username %></h3>
-                                    <p id="profileEmail"><%= email %></p>
+                                    <h3 id="profileName"></h3>
+                                    <p id="profileEmail"></p>
                                 </div>
                             </div>
                         </div>
@@ -722,12 +722,10 @@
                     </button>
                 </article>
             </div>
-            <!-- My Groups Section -->
             <div class="groups-list" id="myGroupsContainer">
                 <div class="groups-header"><i class="fas fa-users"></i> My Groups</div>
                 <div id="groupsListRender"></div>
             </div>
-           -->
         </section>
     </main>
 </div>
@@ -746,7 +744,6 @@
 <div id="toastMsg" class="toast-msg"></div>
 
 <script>
-    // Initialize user groups from localStorage (no hardcoded demo data)
     let userGroups = [];
 
     function loadGroupsFromStorage() {
@@ -813,7 +810,6 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Modal handling
     function openModal(title, bodyHTML, confirmText = "Confirm", onConfirm = null, cancelText = "Cancel") {
         const modal = document.getElementById('globalModal');
         document.getElementById('modalTitle').innerText = title;
@@ -826,7 +822,6 @@
     }
     function closeModal() { document.getElementById('globalModal').classList.remove('active'); }
 
-    // Room: Create Room Modal
     function openCreateRoomModal() {
         openModal("Create Quick Room", `<p style="margin-bottom:1rem;">Start an instant meeting. A new room code will be generated.</p><div class="field"><label>Room Code Preview</label><input type="text" id="previewRoomCode" readonly placeholder="generating..."></div>`, "Create & Join", () => {
             const newCode = Math.floor(10000 + Math.random() * 90000);
@@ -839,7 +834,6 @@
         setTimeout(() => { const inp = document.getElementById('previewRoomCode'); if(inp) inp.value = Math.floor(10000+Math.random()*90000); }, 20);
     }
 
-    // Join Room Modal (popup style)
     function openJoinRoomModal() {
         const modalBody = `
             <div class="field">
@@ -872,7 +866,6 @@
         }, 50);
     }
 
-    // Group creation modal
     function openCreateGroupModal() {
         const modalBody = `<div class="field"><label>Group Name</label><input id="modalGroupName" placeholder="e.g., Marketing Team"></div><div class="field"><label>Description</label><textarea id="modalGroupDesc" placeholder="Group purpose..."></textarea></div>`;
         openModal("Create New Group", modalBody, "Create Group", () => {
@@ -887,7 +880,6 @@
         });
     }
 
-    // Join existing group modal (only checks existing groups, no hardcoded demo)
     function openJoinExistingGroupModal() {
         const modalBody = `<div class="field"><label>Group Code</label><input id="modalJoinCode" placeholder="e.g., GRP1234"></div><p style="font-size: 13px; color: var(--muted);">Enter the group code you received to become a member.</p>`;
         openModal("Join Group", modalBody, "Join Group", () => {
@@ -898,14 +890,31 @@
                 showToast(`You are already a member of "${existing.name}"`, "error"); 
                 return; 
             }
-            // Check if group exists in any external source? For now, group must be created first
-            // To allow joining, we can let user join if code exists in the system (from previous creations)
-            // Since no hardcoded demo, we inform user to get valid code from group creator
             showToast("Group code not found. Please check the code and try again.", "error");
         });
     }
 
-    // Theme functions
+    async function loadUserData() {
+        try {
+            const response = await fetch('/api/user', { credentials: 'include' });
+            if (response.ok) {
+                const user = await response.json();
+                updateUserProfile(user);
+            }
+        } catch (error) {
+            console.log('Could not fetch user data:', error);
+        }
+    }
+
+    function updateUserProfile(user) {
+        const initials = user.initials || (user.name || 'User').substring(0, 2).toUpperCase();
+        document.getElementById('profileInitial').textContent = initials;
+        document.getElementById('profileInitialLg').textContent = initials;
+        document.getElementById('profileName').textContent = user.name || 'User';
+        document.getElementById('userName').textContent = user.name || 'User';
+        document.getElementById('profileEmail').textContent = user.email || 'user@example.com';
+    }
+
     function toggleTheme() {
         const isDark = document.body.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -918,7 +927,6 @@
         document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
     }
     
-    // Profile menu
     function toggleProfileMenu() { 
         document.getElementById('profileDropdown').classList.toggle('active'); 
     }
@@ -926,18 +934,15 @@
         document.getElementById('profileDropdown').classList.remove('active'); 
     }
     
-    // Sign out
     function signOut() { 
         showToast("Signed out successfully", "success"); 
         setTimeout(()=>{ window.location.href = '/login'; }, 800); 
     }
     
-    // Sidebar toggle
     window.toggleSidebar = function() { 
         document.getElementById('sidebar').classList.toggle('open'); 
     };
     
-    // Section navigation
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === id));
         document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.section === id));
@@ -945,12 +950,11 @@
         if(id === 'groups') renderMyGroups();
     }
     
-    // Event listeners
     document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => showSection(btn.dataset.section)));
     document.addEventListener('click', (e) => { if (!e.target.closest('.profile-section')) closeProfileMenu(); });
     
-    // Initialize
     loadTheme();
+    loadUserData();
     loadGroupsFromStorage();
 </script>
 </body>
