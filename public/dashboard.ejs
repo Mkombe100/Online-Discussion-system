@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimbweta Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Kimbweta Dashboard | Smart Meeting Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -18,6 +18,7 @@
             --success: #0f766e;
             --danger: #dc2626;
             --sidebar: #14243a;
+            --overlay-bg: rgba(0,0,0,0.6);
         }
 
         .dark {
@@ -28,6 +29,7 @@
             --muted: #cbd5e1;
             --border: #4a5568;
             --sidebar: #0b1220;
+            --overlay-bg: rgba(0,0,0,0.75);
         }
 
         * {
@@ -118,22 +120,31 @@
             flex-wrap: wrap;
         }
 
+        .topbar-left {
+            flex: 1;
+        }
         .topbar-left h1 {
-            font-size: clamp(28px, 4vw, 40px);
+            font-size: clamp(24px, 4vw, 32px);
             font-weight: 700;
             line-height: 1.2;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+        }
+        .topbar-left h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: -4px;
         }
 
         .topbar-left p {
             color: var(--muted);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
         }
 
         .topbar-right {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
         }
 
@@ -144,12 +155,12 @@
         .profile-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             border: 1px solid var(--border);
             background: var(--surface);
             color: var(--text);
-            padding: 8px 16px;
-            border-radius: 12px;
+            padding: 6px 12px 6px 6px;
+            border-radius: 40px;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
@@ -159,12 +170,11 @@
         .profile-btn:hover {
             background: var(--surface-2);
             border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1);
         }
 
         .profile-avatar {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             background: var(--primary);
             display: flex;
@@ -172,7 +182,7 @@
             justify-content: center;
             color: white;
             font-weight: 800;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .profile-dropdown {
@@ -182,9 +192,9 @@
             margin-top: 8px;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            min-width: 280px;
+            min-width: 260px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-8px);
@@ -207,7 +217,6 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 12px;
         }
 
         .profile-avatar-lg {
@@ -230,7 +239,7 @@
         }
 
         .profile-user-text p {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--muted);
             margin-top: 2px;
         }
@@ -276,17 +285,15 @@
 
         .hamburger {
             display: none;
-            border: 1px solid var(--border);
-            background: var(--surface);
+            background: transparent;
+            border: none;
             color: var(--text);
-            border-radius: 8px;
-            width: 44px;
-            height: 44px;
+            font-size: 24px;
             cursor: pointer;
-            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
-
         .hamburger:hover {
             background: var(--surface-2);
         }
@@ -308,14 +315,14 @@
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
 
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 28px;
+            border-radius: 20px;
+            padding: 24px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             transition: all 0.3s;
         }
@@ -329,11 +336,14 @@
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card p {
             color: var(--muted);
-            line-height: 1.6;
+            line-height: 1.5;
             margin-bottom: 20px;
             font-size: 14px;
         }
@@ -358,21 +368,11 @@
             border: 1px solid var(--border);
             background: var(--surface);
             color: var(--text);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px;
             outline: none;
             font-size: 14px;
             transition: all 0.2s;
-        }
-
-        .field input::placeholder,
-        .field textarea::placeholder {
-            color: var(--muted);
-        }
-
-        .field textarea {
-            min-height: 90px;
-            resize: vertical;
         }
 
         .field input:focus,
@@ -381,16 +381,9 @@
             box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
         }
 
-        .room-code-row {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            align-items: flex-end;
-        }
-
         .btn {
             border: 0;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px 20px;
             cursor: pointer;
             font-weight: 600;
@@ -407,18 +400,16 @@
         .btn:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
         }
 
-        .btn.secondary {
-            color: var(--text);
-            background: var(--surface);
+        .btn-outline {
+            background: transparent;
             border: 1px solid var(--border);
+            color: var(--text);
         }
-
-        .btn.secondary:hover {
+        .btn-outline:hover {
             background: var(--surface-2);
-            border-color: var(--primary);
+            transform: none;
         }
 
         .stats {
@@ -431,15 +422,10 @@
         .stat {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
             text-align: center;
             transition: all 0.2s;
-        }
-
-        .stat:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
         }
 
         .stat strong {
@@ -450,31 +436,131 @@
             margin-bottom: 8px;
         }
 
-        .stat span {
-            color: var(--muted);
-            font-size: 14px;
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.2s ease;
         }
-
-        .status {
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-container {
+            background: var(--surface);
+            border-radius: 28px;
+            max-width: 460px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            transform: scale(0.96);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            background: rgba(15, 118, 110, 0.1);
-            color: var(--success);
+        }
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--muted);
+        }
+        .modal-body {
+            margin-bottom: 24px;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface);
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            padding: 12px 20px;
+            border-radius: 48px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
+            font-weight: 500;
+            color: var(--text);
+            max-width: 90%;
+        }
+        .toast-msg.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .groups-list {
+            margin-top: 24px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .groups-header {
+            padding: 16px 20px;
+            background: var(--surface-2);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+        }
+        .group-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .group-item:last-child {
+            border-bottom: none;
+        }
+        .group-info h4 {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .group-info p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .group-code {
+            font-family: monospace;
+            background: var(--surface-2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 14px;
         }
-
-        .status.error {
-            background: rgba(220, 38, 38, 0.1);
-            color: var(--danger);
-        }
-
         @media (max-width: 780px) {
             .layout {
                 grid-template-columns: 1fr;
             }
-
             .sidebar {
                 position: fixed;
                 inset: 0 auto 0 0;
@@ -484,54 +570,49 @@
                 transition: transform 0.3s;
                 border-radius: 0 12px 12px 0;
             }
-
             .sidebar.open {
                 transform: translateX(0);
-                box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
             }
-
             .hamburger {
-                display: inline-flex;
+                display: block;
             }
-
             .main {
-                padding: 20px;
+                padding: 16px;
             }
-
             .topbar {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
             }
-
-            .topbar-right {
-                width: 100%;
+            .topbar-left {
+                flex: 1;
             }
-
+            .topbar-left h1 {
+                font-size: 20px;
+            }
+            .topbar-left h2 {
+                font-size: 16px;
+            }
+            .topbar-left p {
+                font-size: 11px;
+            }
+            .profile-btn span:not(.profile-avatar) {
+                display: none;
+            }
+            .profile-btn {
+                padding: 4px;
+                gap: 0;
+            }
+            .profile-avatar {
+                width: 38px;
+                height: 38px;
+            }
             .grid {
                 grid-template-columns: 1fr;
             }
-
-            .profile-dropdown {
-                right: auto;
-                left: 0;
-            }
         }
-
         @media (max-width: 480px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-
-            .profile-btn span {
-                display: none;
-            }
-
-            .profile-avatar {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-
             .room-code-row {
                 grid-template-columns: 1fr;
             }
@@ -552,12 +633,13 @@
 
     <main class="main">
         <div class="topbar">
+            <button class="hamburger" type="button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
             <div class="topbar-left">
                 <h1>Welcome back </h1><h2><%= username %></h2>
+                <h2 id="usernameDisplay">Guest</h2>
                 <p>Start a call or organize a group discussion</p>
             </div>
             <div class="topbar-right">
-                <button class="hamburger" type="button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div class="profile-section">
                     <button class="profile-btn" onclick="toggleProfileMenu()">
                         <div class="profile-avatar" id="profileInitial">U</div>
@@ -607,251 +689,273 @@
         <section class="section active" id="meetings">
             <div class="grid">
                 <article class="card">
-                    <h2><i class="fas fa-video" style="margin-right: 8px; color: var(--primary);"></i>Create Quick Room</h2>
+                    <h2><i class="fas fa-video"></i> Create Quick Room</h2>
                     <p>Generate a meeting code and enter the video call immediately. No setup required.</p>
-                    <button class="btn" type="button" onclick="createQuickRoom()">
+                    <button class="btn" type="button" onclick="openCreateRoomModal()">
                         <i class="fas fa-plus"></i> Create room
                     </button>
                 </article>
-
                 <article class="card">
-                    <h2><i class="fas fa-door-open" style="margin-right: 8px; color: var(--primary);"></i>Join Room</h2>
+                    <h2><i class="fas fa-door-open"></i> Join Room</h2>
                     <p>Enter the room code someone shared with you to join an ongoing discussion.</p>
-                    <div class="room-code-row">
-                        <div class="field" style="margin-bottom:0;">
-                            <label for="roomCodeInput">Room code</label>
-                            <input type="text" id="roomCodeInput" placeholder="e.g., 12345" inputmode="numeric" maxlength="6" autocomplete="off">
-                        </div>
-                        <button class="btn" type="button" onclick="joinQuickRoom()">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+                    <button class="btn" type="button" onclick="openJoinRoomModal()">
+                        <i class="fas fa-sign-in-alt"></i> Join room with code
+                    </button>
                 </article>
             </div>
         </section>
 
         <section class="section" id="groups">
-            <p class="status" id="groupStatus"></p>
             <div class="grid">
                 <article class="card">
-                    <h2><i class="fas fa-plus-circle" style="margin-right: 8px; color: var(--success);"></i>Create Group</h2>
+                    <h2><i class="fas fa-plus-circle"></i> Create Group</h2>
                     <p>Save a group and share its code with members for easy access.</p>
-                    <form action="/createGroup" method="post">
-                        <div class="field">
-                            <label for="groupName">Group name</label>
-                            <input id="groupName" type="text" name="name" placeholder="e.g., Project Team" required>
-                        </div>
-                        <div class="field">
-                            <label for="groupDescription">Description (optional)</label>
-                            <textarea id="groupDescription" name="description" placeholder="Describe the purpose of this group..."></textarea>
-                        </div>
-                        <button class="btn" type="submit">
-                            <i class="fas fa-save"></i> Create group
-                        </button>
-                    </form>
+                    <button class="btn" type="button" onclick="openCreateGroupModal()">
+                        <i class="fas fa-save"></i> Create group
+                    </button>
                 </article>
-
                 <article class="card">
-                    <h2><i class="fas fa-user-plus" style="margin-right: 8px; color: var(--primary);"></i>Join Group</h2>
-                    <p>Use a saved group code to join an existing discussion space with your team.</p>
-                    <form action="/joinGroup" method="post">
-                        <div class="field">
-                            <label for="groupCode">Group code</label>
-                            <input id="groupCode" type="text" name="group_code" placeholder="e.g., ABC123" required>
-                        </div>
-                        <button class="btn" type="submit">
-                            <i class="fas fa-sign-in-alt"></i> Join group
-                        </button>
-                    </form>
+                    <h2><i class="fas fa-user-plus"></i> Join Group</h2>
+                    <p>Use a saved group code to join an existing discussion space.</p>
+                    <button class="btn" type="button" onclick="openJoinExistingGroupModal()">
+                        <i class="fas fa-sign-in-alt"></i> Join group
+                    </button>
                 </article>
+            </div>
+            <!-- My Groups Section -->
+            <div class="groups-list" id="myGroupsContainer">
+                <div class="groups-header"><i class="fas fa-users"></i> My Groups</div>
+                <div id="groupsListRender"></div>
             </div>
         </section>
     </main>
 </div>
 
+<!-- Global Modal -->
+<div class="modal-overlay" id="globalModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 id="modalTitle">Modal</h3>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;" id="modalFooter"></div>
+    </div>
+</div>
+<div id="toastMsg" class="toast-msg"></div>
+
 <script>
-    const sidebar = document.getElementById('sidebar');
-    const navButtons = document.querySelectorAll('.nav button');
-    const sections = document.querySelectorAll('.section');
-    const roomCodeInput = document.getElementById('roomCodeInput');
-    const groupStatus = document.getElementById('groupStatus');
-    const profileDropdown = document.getElementById('profileDropdown');
+    // Demo Data + Storage
+    let userGroups = [];
 
-    // Load user data from localStorage or API
-    function loadUserData() {
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-            const user = JSON.parse(userData);
-            updateUserProfile(user);
+    function loadDemoData() {
+        const stored = localStorage.getItem('kimbweta_userGroups');
+        if(stored) {
+            userGroups = JSON.parse(stored);
         } else {
-            // Try to fetch from API
-            fetchUserData();
+            userGroups = [
+                { id: "g1", code: "DESIGN2025", name: "UI/UX Masters", description: "Weekly design critiques", members: 8, isMember: true, createdAt: "2025-01-10" },
+                { id: "g2", code: "DEVHUB", name: "DevOps Circle", description: "Cloud & automation", members: 12, isMember: true, createdAt: "2025-02-01" },
+                { id: "g3", code: "STARTUP", name: "Founders Club", description: "Networking & growth", members: 5, isMember: true, createdAt: "2025-02-15" }
+            ];
+            localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups));
         }
+        if(!localStorage.getItem('quickRoomsCount')) localStorage.setItem('quickRoomsCount', '3');
+        updateStats();
+        renderMyGroups();
     }
 
-    // Fetch user data from backend
-    async function fetchUserData() {
-        try {
-            const response = await fetch('/api/user', {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const user = await response.json();
-                localStorage.setItem('userData', JSON.stringify(user));
-                updateUserProfile(user);
+    function updateStats() {
+        document.getElementById('statRooms').innerText = localStorage.getItem('quickRoomsCount') || '0';
+        document.getElementById('statGroups').innerText = userGroups.length;
+        let totalMembers = userGroups.reduce((sum, g) => sum + (g.members || 1), 0);
+        document.getElementById('statMembers').innerText = totalMembers;
+    }
+
+    function renderMyGroups() {
+        const container = document.getElementById('groupsListRender');
+        if(!container) return;
+        if(userGroups.length === 0) {
+            container.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--muted);">No groups yet. Create or join one!</div>`;
+            return;
+        }
+        container.innerHTML = userGroups.map(group => `
+            <div class="group-item">
+                <div class="group-info">
+                    <h4>${escapeHtml(group.name)}</h4>
+                    <p>${escapeHtml(group.description || 'No description')} • ${group.members} members</p>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <span class="group-code">${group.code}</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="padding: 8px 16px;" onclick="copyGroupCode('${group.code}')"><i class="fas fa-copy"></i> Copy Code</button>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+
+    function copyGroupCode(code) {
+        navigator.clipboard.writeText(code);
+        showToast(`Code ${code} copied!`, "success");
+    }
+
+    function saveGroupsToStorage() { localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups)); updateStats(); renderMyGroups(); }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toastMsg');
+        toast.textContent = message;
+        toast.className = `toast-msg ${type}`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Modal handling
+    function openModal(title, bodyHTML, confirmText = "Confirm", onConfirm = null, cancelText = "Cancel") {
+        const modal = document.getElementById('globalModal');
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalBody').innerHTML = bodyHTML;
+        const footer = document.getElementById('modalFooter');
+        footer.innerHTML = `<button class="btn-outline btn" id="modalCancelBtn">${cancelText}</button><button class="btn" id="modalConfirmBtn">${confirmText}</button>`;
+        modal.classList.add('active');
+        document.getElementById('modalConfirmBtn').onclick = () => { if(onConfirm) onConfirm(); closeModal(); };
+        document.getElementById('modalCancelBtn').onclick = closeModal;
+    }
+    function closeModal() { document.getElementById('globalModal').classList.remove('active'); }
+
+    // Room: Create Room Modal
+    function openCreateRoomModal() {
+        openModal("Create Quick Room", `<p style="margin-bottom:1rem;">Start an instant meeting. A new room code will be generated.</p><div class="field"><label>Room Code Preview</label><input type="text" id="previewRoomCode" readonly placeholder="generating..."></div>`, "Create & Join", () => {
+            const newCode = Math.floor(10000 + Math.random() * 90000);
+            let count = parseInt(localStorage.getItem('quickRoomsCount') || '0');
+            localStorage.setItem('quickRoomsCount', count+1);
+            updateStats();
+            showToast(`Room ${newCode} created! Joining...`, "success");
+            setTimeout(() => { window.location.href = `/room.html?room=${newCode}`; }, 400);
+        }, "Cancel");
+        setTimeout(() => { const inp = document.getElementById('previewRoomCode'); if(inp) inp.value = Math.floor(10000+Math.random()*90000); }, 20);
+    }
+
+    // NEW: Join Room Modal (popup style)
+    function openJoinRoomModal() {
+        const modalBody = `
+            <div class="field">
+                <label for="joinRoomCodeInput">Room Code (numbers only)</label>
+                <input type="text" id="joinRoomCodeInput" placeholder="e.g., 12345" inputmode="numeric" maxlength="6" autocomplete="off">
+            </div>
+            <p style="font-size: 13px; color: var(--muted); margin-top: 8px;">Enter the 5-6 digit code provided by the meeting host.</p>
+        `;
+        openModal("Join Meeting Room", modalBody, "Join Room", () => {
+            const codeInput = document.getElementById('joinRoomCodeInput');
+            let rawCode = codeInput ? codeInput.value.trim() : '';
+            if(!rawCode) {
+                showToast("Please enter a room code", "error");
+                return;
             }
-        } catch (error) {
-            console.log('Could not fetch user data:', error);
-            // Use demo data
-            updateUserProfile({
-                name: 'Demo User',
-                email: 'demo@kimbweta.com',
-                initials: 'DU'
-            });
-        }
+            const roomCode = rawCode.replace(/[^0-9]/g, '');
+            if(roomCode.length === 0) {
+                showToast("Invalid room code. Use numbers only.", "error");
+                return;
+            }
+            showToast(`Joining room ${roomCode}...`, "success");
+            setTimeout(() => { window.location.href = `/room.html?room=${roomCode}`; }, 300);
+        }, "Cancel");
+        // Auto-focus and numeric filter
+        setTimeout(() => {
+            const inp = document.getElementById('joinRoomCodeInput');
+            if(inp) {
+                inp.focus();
+                inp.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, '').slice(0,6); });
+            }
+        }, 50);
     }
 
-    // Update profile UI with user data
+    // Group creation modal
+    function openCreateGroupModal() {
+        const modalBody = `<div class="field"><label>Group Name</label><input id="modalGroupName" placeholder="e.g., Marketing Team"></div><div class="field"><label>Description</label><textarea id="modalGroupDesc" placeholder="Group purpose..."></textarea></div>`;
+        openModal("Create New Group", modalBody, "Create Group", () => {
+            const name = document.getElementById('modalGroupName')?.value.trim();
+            if(!name) { showToast("Group name required", "error"); return; }
+            const desc = document.getElementById('modalGroupDesc')?.value.trim() || "";
+            const newCode = "GRP" + Math.floor(1000+Math.random()*9000);
+            const newGroup = { id: Date.now().toString(), code: newCode, name: name, description: desc, members: 1, isMember: true, createdAt: new Date().toISOString() };
+            userGroups.push(newGroup);
+            saveGroupsToStorage();
+            showToast(`Group "${name}" created! Code: ${newCode}`, "success");
+        });
+    }
+
+    // Join existing group modal
+    function openJoinExistingGroupModal() {
+        const modalBody = `<div class="field"><label>Group Code</label><input id="modalJoinCode" placeholder="e.g., DESIGN2025"></div><p style="font-size: 13px; color: var(--muted);">Enter the group code you received to become a member.</p>`;
+        openModal("Join Group", modalBody, "Join Group", () => {
+            const joinCode = document.getElementById('modalJoinCode')?.value.trim().toUpperCase();
+            if(!joinCode) { showToast("Enter group code", "error"); return; }
+            const existing = userGroups.find(g => g.code === joinCode);
+            if(existing) { showToast(`You are already a member of "${existing.name}"`, "error"); return; }
+            // Predefined demo groups
+            const demoGroups = { "DESIGN2025": { name: "UI/UX Masters", description: "Weekly design critiques", members: 9 }, "DEVHUB": { name: "DevOps Circle", description: "Cloud & automation", members: 13 }, "STARTUP": { name: "Founders Club", description: "Networking & growth", members: 6 } };
+            if(demoGroups[joinCode]) {
+                const grp = demoGroups[joinCode];
+                const newJoined = { id: Date.now().toString(), code: joinCode, name: grp.name, description: grp.description, members: grp.members, isMember: true };
+                userGroups.push(newJoined);
+                saveGroupsToStorage();
+                showToast(`Joined group "${grp.name}" successfully!`, "success");
+            } else {
+                showToast("Group code not found. Please check and try again.", "error");
+            }
+        });
+    }
+
+    // Profile & Theme
+    function loadUserData() {
+        let stored = localStorage.getItem('userData');
+        if(stored) {
+            try { updateUserProfile(JSON.parse(stored)); } catch(e) {}
+        } else {
+            const demoUser = { name: "Alex Kimbweta", email: "alex@kimbweta.com", initials: "AK" };
+            localStorage.setItem('userData', JSON.stringify(demoUser));
+            updateUserProfile(demoUser);
+        }
+        const fallback = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')) : { name: "Guest", initials: "G" };
+        updateUserProfile(fallback);
+    }
     function updateUserProfile(user) {
-        const initials = user.initials || (user.name || 'User').split(' ').map(n => n[0]).join('').toUpperCase();
+        const initials = user.initials || (user.name || 'User').split(' ').map(n=>n[0]).join('').toUpperCase();
         document.getElementById('profileInitial').textContent = initials;
         document.getElementById('profileInitialLg').textContent = initials;
         document.getElementById('profileName').textContent = user.name || 'User';
         document.getElementById('userName').textContent = user.name || 'User';
         document.getElementById('profileEmail').textContent = user.email || 'user@example.com';
+        document.getElementById('usernameDisplay').innerHTML = user.name || 'Guest';
     }
-
-    // Theme toggle
     function toggleTheme() {
         const isDark = document.body.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        updateThemeLabel();
+        document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
         closeProfileMenu();
     }
-
-    function updateThemeLabel() {
-        const isDark = document.body.classList.contains('dark');
-        document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
-    }
-
-    // Load theme preference
     function loadTheme() {
         const theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') {
-            document.body.classList.add('dark');
-        }
-        updateThemeLabel();
+        if(theme === 'dark') document.body.classList.add('dark');
+        document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
     }
-
-    // Profile menu
-    function toggleProfileMenu() {
-        profileDropdown.classList.toggle('active');
-    }
-
-    function closeProfileMenu() {
-        profileDropdown.classList.remove('active');
-    }
-
-    // Sign out
-    function signOut() {
-        localStorage.removeItem('userData');
-        window.location.href = '/login';
-    }
-
-    // Sidebar toggle
-    function toggleSidebar() {
-        sidebar.classList.toggle('open');
-    }
-
-    // Section navigation
+    function toggleProfileMenu() { document.getElementById('profileDropdown').classList.toggle('active'); }
+    function closeProfileMenu() { document.getElementById('profileDropdown').classList.remove('active'); }
+    function signOut() { localStorage.removeItem('userData'); showToast("Signed out", "success"); setTimeout(()=>{ window.location.href = '/login'; }, 800); }
+    window.toggleSidebar = function() { document.getElementById('sidebar').classList.toggle('open'); };
     function showSection(id) {
-        sections.forEach(section => section.classList.toggle('active', section.id === id));
-        navButtons.forEach(button => button.classList.toggle('active', button.dataset.section === id));
-        sidebar.classList.remove('open');
+        document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === id));
+        document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.section === id));
+        document.getElementById('sidebar')?.classList.remove('open');
+        if(id === 'groups') renderMyGroups();
     }
-
-    // Room code generation
-    function generateRoomCode() {
-        return Math.floor(10000 + Math.random() * 90000);
-    }
-
-    function goToRoom(roomCode) {
-        window.location.href = '/room.html?room=' + encodeURIComponent(roomCode);
-    }
-
-    function createQuickRoom() {
-        goToRoom(generateRoomCode());
-    }
-
-    function joinQuickRoom() {
-        const roomCode = roomCodeInput.value.trim().replace(/[^0-9]/g, '');
-
-        if (!roomCode) {
-            alert('Please enter a room code');
-            roomCodeInput.focus();
-            return;
-        }
-
-        goToRoom(roomCode);
-    }
-
-    // Event listeners
-    navButtons.forEach(button => {
-        button.addEventListener('click', () => showSection(button.dataset.section));
-    });
-
-    roomCodeInput.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
-    });
-
-    roomCodeInput.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            joinQuickRoom();
-        }
-    });
-
-    // Close profile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.profile-section')) {
-            closeProfileMenu();
-        }
-    });
-
-    // Check for group status in URL
-    const query = new URLSearchParams(window.location.search);
-    const groupState = query.get('group');
-
-    if (groupState) {
-        showSection('groups');
-    }
-
-    if (groupState === 'created') {
-        groupStatus.textContent = '✓ Group created successfully. Share code: ' + query.get('code');
-    }
-
-    if (groupState === 'joined') {
-        groupStatus.textContent = '✓ Joined group successfully. Group code: ' + query.get('code');
-    }
-
-    if (groupState === 'missing-name') {
-        groupStatus.classList.add('error');
-        groupStatus.textContent = '✗ Please enter a group name.';
-    }
-
-    if (groupState === 'missing-code') {
-        groupStatus.classList.add('error');
-        groupStatus.textContent = '✗ Please enter a group code.';
-    }
-
-    if (groupState === 'not-found') {
-        groupStatus.classList.add('error');
-        groupStatus.textContent = '✗ Group code was not found.';
-    }
-
-    // Initialize
+    document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => showSection(btn.dataset.section)));
+    document.addEventListener('click', (e) => { if (!e.target.closest('.profile-section')) closeProfileMenu(); });
+    
     loadTheme();
     loadUserData();
+    loadDemoData();
 </script>
 </body>
 </html>
