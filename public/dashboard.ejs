@@ -746,60 +746,8 @@
 
 <script>
     // Demo Data + Storage
-    let userGroups = [];
-
-    function loadDemoData() {
-        const stored = localStorage.getItem('kimbweta_userGroups');
-        if(stored) {
-            userGroups = JSON.parse(stored);
-        } else {
-            userGroups = [
-                { id: "g1", code: "DESIGN2025", name: "UI/UX Masters", description: "Weekly design critiques", members: 8, isMember: true, createdAt: "2025-01-10" },
-                { id: "g2", code: "DEVHUB", name: "DevOps Circle", description: "Cloud & automation", members: 12, isMember: true, createdAt: "2025-02-01" },
-                { id: "g3", code: "STARTUP", name: "Founders Club", description: "Networking & growth", members: 5, isMember: true, createdAt: "2025-02-15" }
-            ];
-            localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups));
-        }
-        if(!localStorage.getItem('quickRoomsCount')) localStorage.setItem('quickRoomsCount', '3');
-        updateStats();
-        renderMyGroups();
-    }
-
-    function updateStats() {
-        document.getElementById('statRooms').innerText = localStorage.getItem('quickRoomsCount') || '0';
-        document.getElementById('statGroups').innerText = userGroups.length;
-        let totalMembers = userGroups.reduce((sum, g) => sum + (g.members || 1), 0);
-        document.getElementById('statMembers').innerText = totalMembers;
-    }
-
-    function renderMyGroups() {
-        const container = document.getElementById('groupsListRender');
-        if(!container) return;
-        if(userGroups.length === 0) {
-            container.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--muted);">No groups yet. Create or join one!</div>`;
-            return;
-        }
-        container.innerHTML = userGroups.map(group => `
-            <div class="group-item">
-                <div class="group-info">
-                    <h4>${escapeHtml(group.name)}</h4>
-                    <p>${escapeHtml(group.description || 'No description')} • ${group.members} members</p>
-                    <div style="display: flex; gap: 8px; margin-top: 6px;">
-                        <span class="group-code">${group.code}</span>
-                    </div>
-                </div>
-                <button class="btn btn-outline" style="padding: 8px 16px;" onclick="copyGroupCode('${group.code}')"><i class="fas fa-copy"></i> Copy Code</button>
-            </div>
-        `).join('');
-    }
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
-
-    function copyGroupCode(code) {
-        navigator.clipboard.writeText(code);
-        showToast(`Code ${code} copied!`, "success");
-    }
-
+    
+    
     function saveGroupsToStorage() { localStorage.setItem('kimbweta_userGroups', JSON.stringify(userGroups)); updateStats(); renderMyGroups(); }
 
     function showToast(message, type = 'success') {
@@ -912,10 +860,6 @@
         let stored = localStorage.getItem('userData');
         if(stored) {
             try { updateUserProfile(JSON.parse(stored)); } catch(e) {}
-        } else {
-            const demoUser = { name: "Alex Kimbweta", email: "alex@kimbweta.com", initials: "AK" };
-            localStorage.setItem('userData', JSON.stringify(demoUser));
-            updateUserProfile(demoUser);
         }
         const fallback = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')) : { name: "Guest", initials: "G" };
         updateUserProfile(fallback);
