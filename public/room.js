@@ -177,10 +177,28 @@ function createVideo(id) {
   video.className = "part-videos";
   video.id = id;
 
-  // Click participant video to expand
-  video.addEventListener("click", () => {
-    if (video.requestFullscreen) {
-      video.requestFullscreen();
+  // Double click to fullscreen + landscape
+  video.addEventListener("dblclick", async () => {
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+      }
+
+      // Rotate to landscape on supported phones
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock("landscape");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  // Unlock orientation when exiting fullscreen
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
     }
   });
 
@@ -189,6 +207,7 @@ function createVideo(id) {
 
   return video;
 }
+
 /* CREATE PEER CONNECTION */
 function createPeer(id) {
   const pc = new RTCPeerConnection(config);
