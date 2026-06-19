@@ -18,12 +18,9 @@ let screenStream;
 let peers = {};
 let videoSlots = {};
 
-/* TURN + STUN CONFIG */
 const config = {
   iceServers: [
-    {
-      urls: "stun:stun.relay.metered.ca:80",
-    },
+    { urls: "stun:stun.relay.metered.ca:80" },
     {
       urls: "turn:global.relay.metered.ca:80",
       username: "ddbaf0b8d0faa3e841f1fc5d",
@@ -89,116 +86,100 @@ async function copyInviteLink() {
 
 function leaveRoom() {
   const result = confirm("Are you sure you want to leave this room?");
-
   if (!result) return;
 
-  if (localStream) {
-    localStream.getTracks().forEach((track) => track.stop());
-  }
-
-  if (screenStream) {
-    screenStream.getTracks().forEach((track) => track.stop());
-  }
+  if (localStream) localStream.getTracks().forEach((t) => t.stop());
+  if (screenStream) screenStream.getTracks().forEach((t) => t.stop());
 
   Object.values(peers).forEach((peer) => peer.close());
   socket.disconnect();
+
   window.location.href = "/dashboard";
 }
 
 function replaceVideoTrack(newTrack) {
   Object.values(peers).forEach((peer) => {
-    const sender = peer.getSenders().find((item) => item.track && item.track.kind === "video");
+    const sender = peer
+      .getSenders()
+      .find((s) => s.track && s.track.kind === "video");
 
-    if (sender) {
-      sender.replaceTrack(newTrack);
-    }
+    if (sender) sender.replaceTrack(newTrack);
   });
 }
 
 async function startScreenShare() {
-  if (!navigator.mediaDevices.getDisplayMedia) {
-    alert("Screen sharing is not supported in this browser");
-    return;
-  }
-
   try {
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     const screenTrack = screenStream.getVideoTracks()[0];
 
     replaceVideoTrack(screenTrack);
     localVideo.srcObject = screenStream;
+
     screenBtn.classList.add("active-off");
     screenBtn.querySelector("span").textContent = "Stop";
 
     screenTrack.onended = stopScreenShare;
   } catch (err) {
-    console.log("Screen share error:", err);
+    console.log(err);
   }
 }
 
 function stopScreenShare() {
   if (!screenStream || !localStream) return;
 
-  screenStream.getTracks().forEach((track) => track.stop());
+  screenStream.getTracks().forEach((t) => t.stop());
   screenStream = null;
 
   const cameraTrack = localStream.getVideoTracks()[0];
   replaceVideoTrack(cameraTrack);
+
   localVideo.srcObject = localStream;
+
   screenBtn.classList.remove("active-off");
   screenBtn.querySelector("span").textContent = "Share";
 }
 
-/* GET CAMERA + MIC */
 navigator.mediaDevices
-  .getUserMedia({
-    video: true,
-    audio: true,
-  })
+  .getUserMedia({ video: true, audio: true })
   .then((stream) => {
     localStream = stream;
 
     localVideo.srcObject = stream;
-    hideCameraMessage();
+    localVideo.muted = true;
+    localVideo.playsInline = true;
+    localVideo.setAttribute("playsinline", "");
+    localVideo.play().catch(() => {});
 
+    hideCameraMessage();
     socket.emit("join-room", roomId);
   })
   .catch((err) => {
-    console.log("Camera error:", err);
-    setCameraMessage("Camera or microphone permission is needed to join.");
+    console.log(err);
+    setCameraMessage("Camera or microphone permission is needed.");
   });
 
-/* CREATE VIDEO ELEMENT */
 function createVideo(id) {
   const video = document.createElement("video");
 
   video.autoplay = true;
+  video.muted = true;
   video.playsInline = true;
+  video.setAttribute("playsinline", "");
+
   video.className = "part-videos";
   video.id = id;
 
-  // Double click to fullscreen + landscape
   video.addEventListener("dblclick", async () => {
     try {
       if (video.requestFullscreen) {
         await video.requestFullscreen();
       }
 
-      // Rotate to landscape on supported phones
       if (screen.orientation && screen.orientation.lock) {
         await screen.orientation.lock("landscape");
       }
     } catch (err) {
       console.log(err);
-    }
-  });
-
-  // Unlock orientation when exiting fullscreen
-  document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement) {
-      if (screen.orientation && screen.orientation.unlock) {
-        screen.orientation.unlock();
-      }
     }
   });
 
@@ -208,25 +189,27 @@ function createVideo(id) {
   return video;
 }
 
-/* CREATE PEER CONNECTION */
 function createPeer(id) {
   const pc = new RTCPeerConnection(config);
 
-  /* SEND LOCAL TRACKS */
   localStream.getTracks().forEach((track) => {
     pc.addTrack(track, localStream);
   });
 
-  /* RECEIVE REMOTE VIDEO */
   pc.ontrack = (event) => {
+    const stream = event.streams && event.streams[0];
+    if (!stream) return;
+
     if (!videoSlots[id]) {
       videoSlots[id] = createVideo(id);
     }
 
-    videoSlots[id].srcObject = event.streams[0];
+    const video = videoSlots[id];
+    video.srcObject = stream;
+
+    video.play().catch(() => {});
   };
 
-  /* SEND ICE CANDIDATES */
   pc.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice-candidate", {
@@ -239,27 +222,20 @@ function createPeer(id) {
   return pc;
 }
 
-/* EXISTING USERS */
 socket.on("existing-users", async (users) => {
   users = users.slice(0, 3);
 
   for (let id of users) {
     const pc = createPeer(id);
-
     peers[id] = pc;
 
     const offer = await pc.createOffer();
-
     await pc.setLocalDescription(offer);
 
-    socket.emit("offer", {
-      to: id,
-      offer,
-    });
+    socket.emit("offer", { to: id, offer });
   }
 });
 
-/* NEW USER JOINED */
 socket.on("user-joined", (id) => {
   if (Object.keys(peers).length >= 3) return;
 
@@ -267,27 +243,18 @@ socket.on("user-joined", (id) => {
   updateParticipantCount();
 });
 
-/* RECEIVE OFFER */
 socket.on("offer", async ({ from, offer }) => {
   const pc = createPeer(from);
-
   peers[from] = pc;
 
-  await pc.setRemoteDescription(
-    new RTCSessionDescription(offer)
-  );
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
   const answer = await pc.createAnswer();
-
   await pc.setLocalDescription(answer);
 
-  socket.emit("answer", {
-    to: from,
-    answer,
-  });
+  socket.emit("answer", { to: from, answer });
 });
 
-/* RECEIVE ANSWER */
 socket.on("answer", async ({ from, answer }) => {
   if (peers[from]) {
     await peers[from].setRemoteDescription(
@@ -296,7 +263,6 @@ socket.on("answer", async ({ from, answer }) => {
   }
 });
 
-/* RECEIVE ICE CANDIDATE */
 socket.on("ice-candidate", async ({ from, candidate }) => {
   if (peers[from]) {
     try {
@@ -304,12 +270,11 @@ socket.on("ice-candidate", async ({ from, candidate }) => {
         new RTCIceCandidate(candidate)
       );
     } catch (err) {
-      console.log("ICE error:", err);
+      console.log(err);
     }
   }
 });
 
-/* USER LEFT */
 socket.on("user-left", (id) => {
   if (peers[id]) {
     peers[id].close();
@@ -325,15 +290,13 @@ socket.on("user-left", (id) => {
 });
 
 muteBtn.addEventListener("click", () => {
-  if (!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  if (!track) return;
 
-  const audioTrack = localStream.getAudioTracks()[0];
-  if (!audioTrack) return;
-
-  audioTrack.enabled = !audioTrack.enabled;
+  track.enabled = !track.enabled;
   updateButtonState(
     muteBtn,
-    audioTrack.enabled,
+    track.enabled,
     "fa-solid fa-microphone",
     "fa-solid fa-microphone-slash",
     "Mic",
@@ -342,15 +305,13 @@ muteBtn.addEventListener("click", () => {
 });
 
 cameraBtn.addEventListener("click", () => {
-  if (!localStream) return;
+  const track = localStream.getVideoTracks()[0];
+  if (!track) return;
 
-  const videoTrack = localStream.getVideoTracks()[0];
-  if (!videoTrack) return;
-
-  videoTrack.enabled = !videoTrack.enabled;
+  track.enabled = !track.enabled;
   updateButtonState(
     cameraBtn,
-    videoTrack.enabled,
+    track.enabled,
     "fa-solid fa-video",
     "fa-solid fa-video-slash",
     "Camera",
@@ -359,11 +320,8 @@ cameraBtn.addEventListener("click", () => {
 });
 
 screenBtn.addEventListener("click", () => {
-  if (screenStream) {
-    stopScreenShare();
-  } else {
-    startScreenShare();
-  }
+  if (screenStream) stopScreenShare();
+  else startScreenShare();
 });
 
 copyLinkBtn.addEventListener("click", copyInviteLink);
