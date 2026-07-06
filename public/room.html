@@ -1,506 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Kimbweta Meeting</title>
-  <!-- Font Awesome (same as before) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    /* ----- reset & base ----- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      height: 100vh;
-      overflow: hidden;
-      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-      background: #1a1a1a; /* fallback */
-    }
-
-    /* ----- MAIN GRID (unchanged structure) ----- */
-    main {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      grid-template-rows: 1fr 90px;
-      height: 100vh;
-      background: #0b0b0b;
-      gap: 0;
-    }
-
-    /* ----- EDITOR (green border) ----- */
-    .editor-area {
-      grid-column: 1;
-      grid-row: 1;
-      background: #f5f7fa;
-      border: 12px solid #2b7a2b; /* deeper green, more visible */
-      position: relative;
-      border-radius: 0; /* keep original sharp */
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
-    }
-
-    #sharedEditor {
-      width: 100%;
-      height: 100%;
-      border: none;
-      outline: none;
-      padding: 1.2rem 1.5rem;
-      font-size: 1rem;
-      line-height: 1.6;
-      background: transparent;
-      resize: none;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-      color: #1e2a3a;
-    }
-
-    #sharedEditor::placeholder {
-      color: #6b7a8f;
-      opacity: 0.7;
-      font-weight: 300;
-      letter-spacing: 0.3px;
-    }
-
-    /* ----- RIGHT PANEL (red background) ----- */
-    .right-panel {
-      grid-column: 2;
-      grid-row: 1;
-      background: #c0392b;  /* rich red */
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      scrollbar-width: thin;
-      scrollbar-color: #e67e22 #922b21;
-    }
-
-    .right-panel::-webkit-scrollbar {
-      width: 6px;
-    }
-    .right-panel::-webkit-scrollbar-track {
-      background: #922b21;
-    }
-    .right-panel::-webkit-scrollbar-thumb {
-      background: #e67e22;
-      border-radius: 12px;
-    }
-
-    #participants {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      width: 100%;
-    }
-
-    /* participant video cards — exactly 3 visible at a time (plus "you" if present) */
-    .participant-item {
-      background: #1e1e1e;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.5);
-      aspect-ratio: 4 / 3;   /* consistent shape */
-      width: 100%;
-      position: relative;
-      transition: transform 0.1s ease;
-      border: 2px solid transparent;
-    }
-
-    .participant-item.active-speaker {
-      border-color: #f1c40f;
-    }
-
-    .participant-item video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      background: #2c2c2c;
-    }
-
-    .participant-item .badge {
-      position: absolute;
-      bottom: 8px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      color: #f0f0f0;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 30px;
-      letter-spacing: 0.3px;
-      border: 1px solid rgba(255,255,255,0.1);
-      text-transform: uppercase;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .participant-item .badge i {
-      font-size: 0.6rem;
-      opacity: 0.8;
-    }
-
-    .participant-item .camera-message-participant {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #ddd;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 16px;
-      border-radius: 40px;
-      font-size: 0.7rem;
-      font-weight: 400;
-      backdrop-filter: blur(2px);
-      white-space: nowrap;
-    }
-
-    /* ----- BOTTOM CONTROLS (yellow) ----- */
-    .controls {
-      grid-column: 1 / span 2;
-      grid-row: 2;
-      background: #f1c40f;   /* bright yellow */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      padding: 0 12px;
-      flex-wrap: wrap;
-      border-top: 2px solid #d4ac0d;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
-    }
-
-    .but-con {
-      background: #2c3e50;
-      color: white;
-      border: none;
-      padding: 12px 18px;
-      border-radius: 60px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.15s ease;
-      box-shadow: 0 4px 0 #1a2632;
-      letter-spacing: 0.3px;
-      min-width: 80px;
-      justify-content: center;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .but-con i {
-      font-size: 1.1rem;
-    }
-
-    .but-con:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 0 #1a2632;
-      background: #34495e;
-    }
-
-    .but-con:active {
-      transform: translateY(3px);
-      box-shadow: 0 1px 0 #1a2632;
-    }
-
-    #leaveBtn {
-      background: #c0392b;
-      box-shadow: 0 4px 0 #78281f;
-    }
-
-    #leaveBtn:hover {
-      background: #e74c3c;
-    }
-
-    /* ----- FLOAT VIDEO (bottom-left) exactly as before but refined ----- */
-    .Float {
-      position: fixed;
-      bottom: 110px;
-      left: 16px;
-      width: 180px;
-      height: 120px;
-      background: #1c1c1c;
-      border-radius: 20px;
-      overflow: hidden;
-      z-index: 1000;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.7);
-      border: 2px solid #2ecc71;
-      transition: all 0.2s ease;
-    }
-
-    .Float video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .video-badge {
-      position: absolute;
-      bottom: 6px;
-      left: 10px;
-      color: white;
-      font-size: 0.7rem;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
-      padding: 3px 14px;
-      border-radius: 30px;
-      font-weight: 600;
-      letter-spacing: 0.4px;
-      border: 1px solid rgba(255,255,255,0.15);
-    }
-
-    .camera-message {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #f0f0f0;
-      font-size: 0.7rem;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 14px;
-      border-radius: 40px;
-      backdrop-filter: blur(2px);
-      white-space: nowrap;
-      font-weight: 400;
-    }
-
-    /* ----- hidden spans (required by room.js) ----- */
-    #roomCodeLabel, #participantCount, #remoteCount {
-      display: none !important;
-    }
-
-    /* ----- responsive: tablet & phone (structure untouched) ----- */
-    @media screen and (max-width: 860px) {
-      main {
-        grid-template-columns: 1fr 240px;  /* narrower right panel */
-        grid-template-rows: 1fr 90px;
-      }
-
-      .right-panel {
-        padding: 12px 8px;
-      }
-
-      .participant-item {
-        aspect-ratio: 4 / 3;
-        border-radius: 16px;
-      }
-
-      .but-con {
-        padding: 10px 14px;
-        font-size: 0.75rem;
-        min-width: 64px;
-        gap: 6px;
-      }
-
-      .but-con i {
-        font-size: 0.9rem;
-      }
-
-      .Float {
-        width: 150px;
-        height: 100px;
-        bottom: 100px;
-        left: 12px;
-        border-radius: 16px;
-      }
-    }
-
-    @media screen and (max-width: 600px) {
-      main {
-        grid-template-columns: 1fr 160px;
-        grid-template-rows: 1fr 80px;
-      }
-
-      .editor-area {
-        border-width: 6px;
-      }
-
-      #sharedEditor {
-        padding: 0.8rem 1rem;
-        font-size: 0.9rem;
-      }
-
-      .right-panel {
-        padding: 8px 6px;
-        gap: 8px;
-      }
-
-      #participants {
-        gap: 8px;
-      }
-
-      .participant-item {
-        aspect-ratio: 3 / 4;  /* more vertical, fit 3 easily */
-        border-radius: 14px;
-        min-height: 90px;
-      }
-
-      .participant-item .badge {
-        font-size: 0.55rem;
-        padding: 2px 10px;
-        bottom: 4px;
-        left: 6px;
-      }
-
-      .controls {
-        gap: 8px;
-        padding: 0 6px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        justify-content: flex-start;
-      }
-
-      .but-con {
-        font-size: 0.65rem;
-        padding: 8px 12px;
-        min-width: 52px;
-        gap: 4px;
-        flex-shrink: 0;
-      }
-
-      .but-con i {
-        font-size: 0.8rem;
-      }
-
-      .Float {
-        width: 120px;
-        height: 80px;
-        bottom: 88px;
-        left: 8px;
-        border-radius: 14px;
-        border-width: 2px;
-      }
-
-      .Float .video-badge {
-        font-size: 0.55rem;
-        padding: 2px 10px;
-        bottom: 4px;
-        left: 6px;
-      }
-
-      .camera-message {
-        font-size: 0.55rem;
-        padding: 4px 10px;
-      }
-    }
-
-    /* extra small */
-    @media screen and (max-width: 420px) {
-      main {
-        grid-template-columns: 1fr 130px;
-        grid-template-rows: 1fr 70px;
-      }
-
-      .right-panel {
-        padding: 4px 4px;
-      }
-
-      .participant-item {
-        aspect-ratio: 2 / 3;
-        min-height: 70px;
-        border-radius: 12px;
-      }
-
-      .controls {
-        gap: 4px;
-        padding: 0 4px;
-      }
-
-      .but-con {
-        font-size: 0.55rem;
-        padding: 6px 8px;
-        min-width: 40px;
-        border-radius: 40px;
-      }
-
-      .Float {
-        width: 100px;
-        height: 68px;
-        bottom: 76px;
-        left: 6px;
-      }
-    }
-
-    /* ensure right panel always shows 3 participant items (if available) */
-    .right-panel {
-      scroll-behavior: smooth;
-    }
-
-    /* participant item with hidden video fallback */
-    .participant-item .video-placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #2b2b2b;
-      color: #aaa;
-      height: 100%;
-      font-size: 0.8rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimbweta Meeting</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div class="meeting-shell">
+    <header class="meeting-header">
+        <div>
+            <p class="label">Live meeting</p>
+            <h1>Room <span id="roomCodeLabel">----</span></h1>
+        </div>
+        <div class="header-actions">
+            <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
+            <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
+                <i class="fa-solid fa-link"></i>
+                Invite
+            </button>
+        </div>
+    </header>
 
-<main>
+    <main class="meeting-main">
+        <section class="stage">
+            <video id="localVideo" autoplay playsinline muted class="AA"></video>
+            <div class="video-badge">You</div>
+            <p class="camera-message" id="cameraMessage">Starting camera...</p>
+        </section>
 
-  <!-- LEFT EDITOR (green border) -->
-  <div class="editor-area">
-    <textarea id="sharedEditor" placeholder="Type here... (Visible to all users in the room)"></textarea>
-  </div>
+        <aside class="participants-panel">
+            <div class="panel-heading">
+                <h2>Participants</h2>
+                <span id="remoteCount">0 online</span>
+            </div>
+            <div class="participants" id="participants"></div>
+        </aside>
+    </main>
 
-  <!-- RIGHT PANEL (red) -->
-  <div class="right-panel">
-    <div id="participants"></div>
-  </div>
+    <footer class="controls">
+        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
+            <i class="fa-solid fa-microphone"></i>
+            <span>Mic</span>
+        </button>
 
-  <!-- BOTTOM CONTROLS (yellow) -->
-  <div class="controls">
-    <button class="but-con" id="muteBtn">
-      <i class="fa-solid fa-microphone"></i>
-      Mic
-    </button>
-    <button class="but-con" id="cameraBtn">
-      <i class="fa-solid fa-video"></i>
-      Camera
-    </button>
-    <button class="but-con" id="screenBtn">
-      <i class="fa-solid fa-display"></i>
-      Share
-    </button>
-    <button class="but-con" id="copyLinkBtn">
-      <i class="fa-solid fa-copy"></i>
-      Copy
-    </button>
-    <button class="but-con" id="leaveBtn">
-      <i class="fa-solid fa-phone"></i>
-      Leave
-    </button>
-  </div>
+        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
+            <i class="fa-solid fa-video"></i>
+            <span>Camera</span>
+        </button>
 
-</main>
+        <button class="but-con" id="screenBtn" type="button" title="Share screen">
+            <i class="fa-solid fa-display"></i>
+            <span>Share</span>
+        </button>
 
-<!-- FLOAT VIDEO (local) -->
-<div class="Float">
-  <video id="localVideo" autoplay playsinline muted></video>
-  <div class="video-badge">You</div>
-  <p class="camera-message" id="cameraMessage">Starting camera...</p>
+        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
+        </button>
+
+        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
+            <i class="fa-solid fa-phone"></i>
+            <span>Leave</span>
+        </button>
+    </footer>
 </div>
 
-<!-- hidden required elements -->
-<span id="roomCodeLabel" style="display:none"></span>
-<span id="participantCount" style="display:none"></span>
-<span id="remoteCount" style="display:none"></span>
-
-<!-- scripts (room.js will attach remote participants) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
-
 </body>
 </html>
