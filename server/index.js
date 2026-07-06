@@ -107,82 +107,98 @@ app.get("/createRoom", (req, res) => {
 });
 
 // SOCKET.IO
+// rooms structure: rooms[roomId] = { owner: socketId|null, participants: [socketId,...], notes: null }
 const rooms = {};
-const roomNotes = {}; // Store notes for each room
 
 io.on("connection", (socket) => {
 
-    socket.on("join-room", (roomId) => {
+  socket.on("join-room", (payload) => {
+    // payload can be a string roomId or an object { roomId }
+    const roomId = typeof payload === "string" ? payload : (payload && payload.roomId) || "test";
 
-        socket.join(roomId);
+    socket.join(roomId);
 
-        if (!rooms[roomId]) {
-            rooms[roomId] = [];
-            roomNotes[roomId] = null;
-        }
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        owner: socket.id, // first to join becomes owner
+        participants: [],
+        notes: null
+      };
+    }
 
-        const others = rooms[roomId];
+    // Add to participants if not already present
+    if (!rooms[roomId].participants.includes(socket.id)) {
+      rooms[roomId].participants.push(socket.id);
+    }
 
-        socket.emit("existing-users", others);
+    // Inform the joining client about current room owner
+    socket.emit("room-info", { owner: rooms[roomId].owner });
 
-        // Send current room notes to new user if available
-        if (roomNotes[roomId]) {
-            socket.emit("receive-notes", roomNotes[roomId]);
-        }
+    // Send existing participants (other than the joining socket)
+    const others = rooms[roomId].participants.filter(id => id !== socket.id);
+    socket.emit("existing-users", others);
 
-        rooms[roomId].push(socket.id);
+    // Send current room notes to new user if available
+    if (rooms[roomId].notes) {
+      socket.emit("receive-notes", rooms[roomId].notes);
+    }
 
-        socket.to(roomId).emit("user-joined", socket.id);
+    // Notify others that a user joined
+    socket.to(roomId).emit("user-joined", socket.id);
 
-        socket.on("disconnect", () => {
+    socket.on("disconnect", () => {
+      if (rooms[roomId]) {
+        rooms[roomId].participants = rooms[roomId].participants.filter(id => id !== socket.id);
+      }
 
-            if (rooms[roomId]) {
-                rooms[roomId] = rooms[roomId].filter(
-                    id => id !== socket.id
-                );
-            }
+      socket.to(roomId).emit("user-left", socket.id);
 
-            socket.to(roomId).emit(
-                "user-left",
-                socket.id
-            );
-        });
+      // If owner left, pick a new owner (first participant) or null
+      if (rooms[roomId] && rooms[roomId].owner === socket.id) {
+        const nextOwner = rooms[roomId].participants[0] || null;
+        rooms[roomId].owner = nextOwner;
+        io.to(roomId).emit("owner-changed", { owner: rooms[roomId].owner });
+      }
     });
+  });
 
-    socket.on("offer", ({ to, offer }) => {
-        io.to(to).emit("offer", {
-            from: socket.id,
-            offer
-        });
+  socket.on("offer", ({ to, offer }) => {
+    io.to(to).emit("offer", {
+      from: socket.id,
+      offer
     });
+  });
 
-    socket.on("answer", ({ to, answer }) => {
-        io.to(to).emit("answer", {
-            from: socket.id,
-            answer
-        });
+  socket.on("answer", ({ to, answer }) => {
+    io.to(to).emit("answer", {
+      from: socket.id,
+      answer
     });
+  });
 
-    socket.on("ice-candidate", ({ to, candidate }) => {
-        io.to(to).emit("ice-candidate", {
-            from: socket.id,
-            candidate
-        });
+  socket.on("ice-candidate", ({ to, candidate }) => {
+    io.to(to).emit("ice-candidate", {
+      from: socket.id,
+      candidate
     });
+  });
 
-    // Handle notes sharing
-    socket.on("share-notes", ({ roomId, fileName, content }) => {
-        // Store notes for the room
-        roomNotes[roomId] = {
-            fileName: fileName,
-            content: content,
-            sharedBy: socket.id,
-            timestamp: new Date().getTime()
-        };
+  // Handle notes sharing (host-only)
+  socket.on("share-notes", ({ roomId, fileName, content }) => {
+    if (!rooms[roomId] || rooms[roomId].owner !== socket.id) {
+      socket.emit("action-denied", { message: "Only the room creator can share notes." });
+      return;
+    }
 
-        // Broadcast notes to all users in the room
-        io.to(roomId).emit("receive-notes", roomNotes[roomId]);
-    });
+    rooms[roomId].notes = {
+      fileName,
+      content,
+      sharedBy: socket.id,
+      timestamp: Date.now()
+    };
+
+    io.to(roomId).emit("receive-notes", rooms[roomId].notes);
+  });
 
 });
 
