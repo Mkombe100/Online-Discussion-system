@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kimbweta Meeting</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style1.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,10 +24,9 @@
     </header>
 
     <main class="meeting-main">
+
         <section class="stage">
-            <video id="localVideo" autoplay playsinline muted class="AA"></video>
-            <div class="video-badge">You</div>
-            <p class="camera-message" id="cameraMessage">Starting camera...</p>
+                  
         </section>
 
         <aside class="participants-panel">
@@ -38,6 +36,7 @@
             </div>
             <div class="participants" id="participants"></div>
         </aside>
+
     </main>
 
     <footer class="controls">
@@ -68,7 +67,54 @@
     </footer>
 </div>
 
+<div class="myVid">
+    <video  class="video1234"  id="localVideo" autoplay playsinline muted class="AA"></video>
+    <div class="video-badge">You</div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
+<script>
+    const box = document.querySelector(".myVid");
+
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    box.addEventListener("pointerdown", startDrag);
+    document.addEventListener("pointermove", moveDrag);
+    document.addEventListener("pointerup", endDrag);
+
+    function startDrag(e) {
+        isDragging = true;
+
+        box.style.cursor = "grabbing";
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        initialLeft = box.offsetLeft;
+        initialTop = box.offsetTop;
+
+        box.setPointerCapture(e.pointerId);
+    }
+
+    function moveDrag(e) {
+        if (!isDragging) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        box.style.left = initialLeft + dx + "px";
+        box.style.top = initialTop + dy + "px";
+    }
+
+    function endDrag() {
+        isDragging = false;
+        box.style.cursor = "grab";
+    }
+</script>
 </body>
 </html>
