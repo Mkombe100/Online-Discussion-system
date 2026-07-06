@@ -108,6 +108,7 @@ app.get("/createRoom", (req, res) => {
 
 // SOCKET.IO
 const rooms = {};
+const roomNotes = {}; // Store notes for each room
 
 io.on("connection", (socket) => {
 
@@ -117,11 +118,17 @@ io.on("connection", (socket) => {
 
         if (!rooms[roomId]) {
             rooms[roomId] = [];
+            roomNotes[roomId] = null;
         }
 
         const others = rooms[roomId];
 
         socket.emit("existing-users", others);
+
+        // Send current room notes to new user if available
+        if (roomNotes[roomId]) {
+            socket.emit("receive-notes", roomNotes[roomId]);
+        }
 
         rooms[roomId].push(socket.id);
 
@@ -161,6 +168,20 @@ io.on("connection", (socket) => {
             from: socket.id,
             candidate
         });
+    });
+
+    // Handle notes sharing
+    socket.on("share-notes", ({ roomId, fileName, content }) => {
+        // Store notes for the room
+        roomNotes[roomId] = {
+            fileName: fileName,
+            content: content,
+            sharedBy: socket.id,
+            timestamp: new Date().getTime()
+        };
+
+        // Broadcast notes to all users in the room
+        io.to(roomId).emit("receive-notes", roomNotes[roomId]);
     });
 
 });
