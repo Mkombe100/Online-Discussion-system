@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,347 +7,6 @@
     <title>Kimbweta Meeting</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        /* Grid Layout Override */
-        body {
-            overflow: hidden;
-        }
-
-        main {
-            display: grid;
-            grid-template-columns: 63rem 1fr;
-            height: calc(100vh - 50px);
-            gap: 0;
-            padding: 0;
-        }
-
-        .right {
-            display: grid;
-            grid-template-rows: 34rem 1fr;
-            position: relative;
-            background: #0f172a;
-        }
-
-        .left {
-            background: #0f172a;
-            overflow-y: auto;
-            padding: 0;
-        }
-
-        .rightTop {
-            background: #111c2e;
-            padding: 14px;
-            overflow-y: auto;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            margin: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .editor-toolbar {
-            display: flex;
-            gap: 8px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-        }
-
-        .editor-toolbar button {
-            padding: 6px 12px;
-            background: #1e293b;
-            color: #e2e8f0;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 800;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .editor-toolbar button:hover {
-            background: #334155;
-        }
-
-        .editor-toolbar button.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        #sharedEditor {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 6px;
-            font-family: Inter, "Segoe UI", Arial, sans-serif;
-            font-size: 14px;
-            resize: none;
-            background: #020617;
-            color: #f8fafc;
-        }
-
-        #sharedEditor:focus {
-            outline: 1px solid rgba(148, 163, 184, 0.3);
-            background: #111c2e;
-        }
-
-        #notesContainer {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 6px;
-            background: #020617;
-            color: #f8fafc;
-            overflow-y: auto;
-            display: none;
-        }
-
-        #notesContainer.active {
-            display: block;
-        }
-
-        .notes-info {
-            font-size: 13px;
-            color: #94a3b8;
-            padding: 10px;
-            text-align: center;
-        }
-
-        #notesDisplay {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Courier New', monospace;
-            line-height: 1.6;
-            padding: 10px;
-        }
-
-        .rightBottom {
-            background: rgba(15, 23, 42, 0.92);
-            padding: 12px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            border-radius: 8px;
-            margin: 14px;
-            min-height: 78px;
-        }
-
-        .Float {
-            background: #020617;
-            width: 13rem;
-            height: 8.5rem;
-            position: absolute;
-            bottom: 2rem;
-            left: 10px;
-            z-index: 100;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-        }
-
-        .Float video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .Float .video-badge {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(15, 23, 42, 0.82);
-            color: #f8fafc;
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 12px;
-            z-index: 5;
-        }
-
-        .Float .expand-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #1e293b;
-            color: #e2e8f0;
-            border: none;
-            border-radius: 6px;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            z-index: 10;
-            transition: background 0.2s;
-        }
-
-        .Float .expand-btn:hover {
-            background: #334155;
-        }
-
-        .Float .camera-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #cbd5e1;
-            text-align: center;
-            background: rgba(15, 23, 42, 0.82);
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 5;
-        }
-
-        .Float .camera-message.hidden {
-            display: none;
-        }
-
-        /* Participants Grid */
-        .participants-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 10px;
-            padding: 14px;
-        }
-
-        .remote-video-container {
-            position: relative;
-            background: #020617;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-        }
-
-        .remote-video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .remote-video-container .video-label {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(15, 23, 42, 0.82);
-            color: #f8fafc;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 800;
-            z-index: 5;
-        }
-
-        .remote-video-container .expand-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #1e293b;
-            color: #e2e8f0;
-            border: none;
-            border-radius: 6px;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            z-index: 10;
-            transition: background 0.2s;
-        }
-
-        .remote-video-container .expand-btn:hover {
-            background: #334155;
-        }
-
-        /* Expanded Video Modal */
-        .videoModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .videoModal.active {
-            display: flex;
-        }
-
-        .videoModal video {
-            max-width: 90vw;
-            max-height: 90vh;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-
-        .videoModal .close-expand-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(15, 23, 42, 0.82);
-            color: #f8fafc;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .videoModal .close-expand-btn:hover {
-            background: rgba(15, 23, 42, 0.95);
-        }
-
-        /* Hidden file input */
-        #notesFileInput {
-            display: none;
-        }
-
-        /* Adjust meeting-shell for new layout */
-        .meeting-shell {
-            height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            gap: 0;
-            padding: 0;
-        }
-
-        .meeting-header {
-            padding: 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            background: #0f172a;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-        }
-
-        .meeting-main {
-            display: grid;
-            grid-template-columns: 63rem 1fr;
-            height: calc(100vh - 90px);
-            gap: 0;
-        }
-    </style>
 </head>
 <body>
 <div class="meeting-shell">
@@ -365,204 +25,50 @@
     </header>
 
     <main class="meeting-main">
-        <div class="right">
-            <div class="rightTop">
-                <div class="editor-toolbar">
-                    <button id="notebookBtn" class="active" type="button">
-                        <i class="fa-solid fa-pen"></i> Notebook
-                    </button>
-                    <button id="notesBtn" type="button">
-                        <i class="fa-solid fa-file"></i> View Notes
-                    </button>
-                    <button id="uploadNotesBtn" type="button">
-                        <i class="fa-solid fa-upload"></i> Upload Notes
-                    </button>
-                </div>
-                <textarea id="sharedEditor" placeholder="Shared Notebook - Type here (Visible to all users in the room)"></textarea>
-                <div id="notesContainer">
-                    <div class="notes-info">Shared Notes File</div>
-                    <div id="notesDisplay"></div>
-                </div>
+        <section class="stage">
+            <video id="localVideo" autoplay playsinline muted class="AA"></video>
+            <div class="video-badge">You</div>
+            <p class="camera-message" id="cameraMessage">Starting camera...</p>
+        </section>
+
+        <aside class="participants-panel">
+            <div class="panel-heading">
+                <h2>Participants</h2>
+                <span id="remoteCount">0 online</span>
             </div>
-            <div class="rightBottom">
-                <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
-                    <i class="fa-solid fa-microphone"></i>
-                    <span>Mic</span>
-                </button>
-
-                <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
-                    <i class="fa-solid fa-video"></i>
-                    <span>Camera</span>
-                </button>
-
-                <button class="but-con" id="screenBtn" type="button" title="Share screen">
-                    <i class="fa-solid fa-display"></i>
-                    <span>Share</span>
-                </button>
-
-                <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
-                    <i class="fa-solid fa-copy"></i>
-                    <span>Copy</span>
-                </button>
-
-                <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
-                    <i class="fa-solid fa-phone"></i>
-                    <span>Leave</span>
-                </button>
-            </div>
-
-            <div class="Float" id="floatVideo">
-                <video id="localVideo" autoplay playsinline muted class="AA"></video>
-                <div class="video-badge">You</div>
-                <button class="expand-btn" id="expandVideoBtn" type="button" title="Expand video">
-                    <i class="fa-solid fa-expand"></i>
-                </button>
-                <p class="camera-message" id="cameraMessage">Starting camera...</p>
-            </div>
-        </div>
-
-        <div class="left">
-            <div class="participants-grid" id="remoteVideos"></div>
-        </div>
+            <div class="participants" id="participants"></div>
+        </aside>
     </main>
-</div>
 
-<!-- Expanded Video Modal -->
-<div class="videoModal" id="videoModal">
-    <button class="close-expand-btn" id="closeVideoModal" type="button" title="Close">
-        <i class="fa-solid fa-times"></i>
-    </button>
-    <video id="expandedVideo" autoplay playsinline muted></video>
-</div>
+    <footer class="controls">
+        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
+            <i class="fa-solid fa-microphone"></i>
+            <span>Mic</span>
+        </button>
 
-<!-- Hidden file input for notes upload -->
-<input type="file" id="notesFileInput" accept=".txt,.pdf,.doc,.docx" />
+        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
+            <i class="fa-solid fa-video"></i>
+            <span>Camera</span>
+        </button>
+
+        <button class="but-con" id="screenBtn" type="button" title="Share screen">
+            <i class="fa-solid fa-display"></i>
+            <span>Share</span>
+        </button>
+
+        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
+        </button>
+
+        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
+            <i class="fa-solid fa-phone"></i>
+            <span>Leave</span>
+        </button>
+    </footer>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-    // Video expansion functionality
-    const expandBtn = document.getElementById('expandVideoBtn');
-    const videoModal = document.getElementById('videoModal');
-    const closeVideoModalBtn = document.getElementById('closeVideoModal');
-    const expandedVideo = document.getElementById('expandedVideo');
-    const localVideo = document.getElementById('localVideo');
-
-    expandBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        videoModal.classList.add('active');
-        expandedVideo.srcObject = localVideo.srcObject;
-    });
-
-    closeVideoModalBtn.addEventListener('click', () => {
-        videoModal.classList.remove('active');
-        expandedVideo.srcObject = null;
-    });
-
-    videoModal.addEventListener('click', (e) => {
-        if (e.target === videoModal) {
-            videoModal.classList.remove('active');
-            expandedVideo.srcObject = null;
-        }
-    });
-
-    // Keyboard shortcut to close expanded video
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && videoModal.classList.contains('active')) {
-            videoModal.classList.remove('active');
-            expandedVideo.srcObject = null;
-        }
-    });
-
-    // Notebook and Notes Functionality
-    const notebookBtn = document.getElementById('notebookBtn');
-    const notesBtn = document.getElementById('notesBtn');
-    const uploadNotesBtn = document.getElementById('uploadNotesBtn');
-    const sharedEditor = document.getElementById('sharedEditor');
-    const notesContainer = document.getElementById('notesContainer');
-    const notesDisplay = document.getElementById('notesDisplay');
-    const notesFileInput = document.getElementById('notesFileInput');
-
-    const socket = io();
-
-    notebookBtn.addEventListener('click', () => {
-        notebookBtn.classList.add('active');
-        notesBtn.classList.remove('active');
-        sharedEditor.style.display = 'block';
-        notesContainer.classList.remove('active');
-    });
-
-    notesBtn.addEventListener('click', () => {
-        notesBtn.classList.add('active');
-        notebookBtn.classList.remove('active');
-        sharedEditor.style.display = 'none';
-        notesContainer.classList.add('active');
-    });
-
-    uploadNotesBtn.addEventListener('click', () => {
-        notesFileInput.click();
-    });
-
-    notesFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const content = event.target.result;
-            // Emit notes to all users in the room
-            const roomId = new URLSearchParams(window.location.search).get('room') || 'test';
-            socket.emit('share-notes', {
-                roomId: roomId,
-                fileName: file.name,
-                content: content
-            });
-            
-            // Show the notes view
-            notesBtn.click();
-        };
-        reader.readAsText(file);
-        
-        // Reset file input
-        notesFileInput.value = '';
-    });
-
-    // Listen for notes from other users
-    socket.on('receive-notes', (data) => {
-        notesDisplay.textContent = data.content;
-        notesBtn.classList.add('active');
-        notebookBtn.classList.remove('active');
-        sharedEditor.style.display = 'none';
-        notesContainer.classList.add('active');
-    });
-
-    // Helper function to create remote video containers
-    function createRemoteVideoElement(peerId, peerName = 'Participant') {
-        const container = document.createElement('div');
-        container.className = 'remote-video-container';
-        container.id = `video-${peerId}`;
-        container.innerHTML = `
-            <video autoplay playsinline class="part-videos"></video>
-            <div class="video-label">${peerName}</div>
-            <button class="expand-btn" type="button" title="Expand video">
-                <i class="fa-solid fa-expand"></i>
-            </button>
-        `;
-
-        const video = container.querySelector('video');
-        const expandBtn = container.querySelector('.expand-btn');
-
-        expandBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            videoModal.classList.add('active');
-            expandedVideo.srcObject = video.srcObject;
-        });
-
-        return container;
-    }
-
-    // Export for use in room.js
-    window.createRemoteVideoElement = createRemoteVideoElement;
-</script>
 <script src="room.js"></script>
 </body>
 </html>
