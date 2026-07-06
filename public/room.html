@@ -18,7 +18,6 @@ body {
     background: #0f172a;
     color: #f8fafc;
     overflow: hidden;
-    position: relative; 
 }
 
 button {
@@ -96,34 +95,6 @@ button {
     background: #020617;
     border: 1px solid rgba(148, 163, 184, 0.2);
 }
-
-
-.myVid {
-    width: clamp(7rem, 18vw, 12rem);
-    height: clamp(7rem, 18vw, 12rem);
-    border: 3px solid red;
-    border-radius: 50%;
-    overflow: hidden;
-    position: absolute;
-    bottom: 1.5rem;
-    left: 12px;
-    z-index: 100;
-
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
-}
-
-.myVid:active {
-    cursor: grabbing;
-}
-
-.video1234 {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 
 .AA,
 .part-videos,
@@ -341,9 +312,10 @@ video {
     </header>
 
     <main class="meeting-main">
-
         <section class="stage">
-                  
+            <video id="localVideo" autoplay playsinline muted class="AA"></video>
+            <div class="video-badge">You</div>
+            <p class="camera-message" id="cameraMessage">Starting camera...</p>
         </section>
 
         <aside class="participants-panel">
@@ -353,7 +325,6 @@ video {
             </div>
             <div class="participants" id="participants"></div>
         </aside>
-
     </main>
 
     <footer class="controls">
@@ -384,54 +355,7 @@ video {
     </footer>
 </div>
 
-<div class="myVid">
-    <video  class="video1234"  id="localVideo" autoplay playsinline muted class="AA"></video>
-    <div class="video-badge">You</div>
-</div>
-
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
-<script>
-    const box = document.querySelector(".myVid");
-
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let initialLeft = 0;
-    let initialTop = 0;
-
-    box.addEventListener("pointerdown", startDrag);
-    document.addEventListener("pointermove", moveDrag);
-    document.addEventListener("pointerup", endDrag);
-
-    function startDrag(e) {
-        isDragging = true;
-
-        box.style.cursor = "grabbing";
-
-        startX = e.clientX;
-        startY = e.clientY;
-
-        initialLeft = box.offsetLeft;
-        initialTop = box.offsetTop;
-
-        box.setPointerCapture(e.pointerId);
-    }
-
-    function moveDrag(e) {
-        if (!isDragging) return;
-
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-
-        box.style.left = initialLeft + dx + "px";
-        box.style.top = initialTop + dy + "px";
-    }
-
-    function endDrag() {
-        isDragging = false;
-        box.style.cursor = "grab";
-    }
-</script>
 </body>
 </html>
