@@ -1,7 +1,8 @@
 const socket = io();
 
 const localVideo = document.getElementById("localVideo");
-const participants = document.getElementById("participants");
+// `remoteVideos` is the id used in room.html; fall back to `participants` for safety
+const participants = document.getElementById("remoteVideos") || document.getElementById("participants");
 const roomCodeLabel = document.getElementById("roomCodeLabel");
 const participantCount = document.getElementById("participantCount");
 const remoteCount = document.getElementById("remoteCount");
@@ -51,8 +52,8 @@ roomCodeLabel.textContent = roomId;
 
 function updateParticipantCount() {
   const count = Object.keys(peers).length + 1;
-  participantCount.textContent = count;
-  remoteCount.textContent = `${count - 1} online`;
+  if (participantCount) participantCount.textContent = count;
+  if (remoteCount) remoteCount.textContent = `${count - 1} online`;
 }
 
 function updateButtonState(button, enabled, onIcon, offIcon, onLabel, offLabel) {
@@ -183,7 +184,10 @@ function createVideo(id) {
     }
   });
 
-  participants.appendChild(video);
+  // guard against missing container
+  if (participants) participants.appendChild(video);
+  else console.warn('No participants container found to append remote video');
+
   updateParticipantCount();
 
   return video;
