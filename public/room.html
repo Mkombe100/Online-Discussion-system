@@ -1,74 +1,189 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimbweta Meeting</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimbweta Meeting</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    font-family:Arial;
+}
+
+/* MAIN LAYOUT */
+main{
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: 1fr 90px;
+    height:100vh;
+}
+
+/* LEFT EDITOR (GREEN BORDER LIKE IMAGE) */
+.editor-area{
+    grid-column:1;
+    grid-row:1;
+    background:#f9f9f9;
+    border:12px solid green;
+    position:relative;
+}
+
+#sharedEditor{
+    width:100%;
+    height:100%;
+    border:none;
+    outline:none;
+    padding:15px;
+    font-size:14px;
+}
+
+/* RIGHT PANEL (RED) */
+.right-panel{
+    grid-column:2;
+    grid-row:1;
+    background:red;
+    overflow:auto;
+    padding:10px;
+}
+
+#participants{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+/* BOTTOM CONTROLS (YELLOW) */
+.controls{
+    grid-column:1 / span 2;
+    grid-row:2;
+    background:yellow;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+}
+
+/* BUTTONS */
+.but-con{
+    background:#6c63ff;
+    color:white;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* FLOAT VIDEO (BOTTOM LEFT OVERLAY) */
+.Float{
+    position:fixed;
+    bottom:110px;
+    left:15px;
+    width:180px;
+    height:120px;
+    background:#000;
+    border-radius:10px;
+    overflow:hidden;
+    z-index:1000;
+}
+
+.Float video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.video-badge{
+    position:absolute;
+    bottom:5px;
+    left:5px;
+    color:white;
+    font-size:12px;
+}
+
+/* CAMERA MESSAGE */
+.camera-message{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:11px;
+    background:rgba(0,0,0,0.5);
+    padding:4px;
+    border-radius:4px;
+}
+</style>
 </head>
+
 <body>
-<div class="meeting-shell">
-    <header class="meeting-header">
-        <div>
-            <p class="label">Live meeting</p>
-            <h1>Room <span id="roomCodeLabel">----</span></h1>
-        </div>
-        <div class="header-actions">
-            <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
-            <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
-                <i class="fa-solid fa-link"></i>
-                Invite
-            </button>
-        </div>
-    </header>
 
-    <main class="meeting-main">
-        <section class="stage">
-            <video id="localVideo" autoplay playsinline muted class="AA"></video>
-            <div class="video-badge">You</div>
-            <p class="camera-message" id="cameraMessage">Starting camera...</p>
-        </section>
+<main>
 
-        <aside class="participants-panel">
-            <div class="panel-heading">
-                <h2>Participants</h2>
-                <span id="remoteCount">0 online</span>
-            </div>
-            <div class="participants" id="participants"></div>
-        </aside>
-    </main>
-
-    <footer class="controls">
-        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
-            <i class="fa-solid fa-microphone"></i>
-            <span>Mic</span>
-        </button>
-
-        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
-            <i class="fa-solid fa-video"></i>
-            <span>Camera</span>
-        </button>
-
-        <button class="but-con" id="screenBtn" type="button" title="Share screen">
-            <i class="fa-solid fa-display"></i>
-            <span>Share</span>
-        </button>
-
-        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
-            <i class="fa-solid fa-copy"></i>
-            <span>Copy</span>
-        </button>
-
-        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
-            <i class="fa-solid fa-phone"></i>
-            <span>Leave</span>
-        </button>
-    </footer>
+<!-- LEFT EDITOR -->
+<div class="editor-area">
+    <textarea id="sharedEditor" placeholder="Type here... (Visible to all users in the room)"></textarea>
 </div>
+
+<!-- RIGHT PARTICIPANTS -->
+<div class="right-panel">
+    <div id="participants"></div>
+</div>
+
+<!-- BOTTOM CONTROLS -->
+<div class="controls">
+
+    <button class="but-con" id="muteBtn">
+        <i class="fa-solid fa-microphone"></i>
+        Mic
+    </button>
+
+    <button class="but-con" id="cameraBtn">
+        <i class="fa-solid fa-video"></i>
+        Camera
+    </button>
+
+    <button class="but-con" id="screenBtn">
+        <i class="fa-solid fa-display"></i>
+        Share
+    </button>
+
+    <button class="but-con" id="copyLinkBtn">
+        <i class="fa-solid fa-copy"></i>
+        Copy
+    </button>
+
+    <button class="but-con" id="leaveBtn">
+        <i class="fa-solid fa-phone"></i>
+        Leave
+    </button>
+
+</div>
+
+</main>
+
+<!-- FLOAT VIDEO (IMPORTANT IDS MATCH room.js) -->
+<div class="Float">
+    <video id="localVideo" autoplay playsinline muted></video>
+    <div class="video-badge">You</div>
+    <p class="camera-message" id="cameraMessage">Starting camera...</p>
+</div>
+
+<!-- REQUIRED IDS FOR room.js -->
+<span id="roomCodeLabel" style="display:none"></span>
+<span id="participantCount" style="display:none"></span>
+<span id="remoteCount" style="display:none"></span>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
+
 </body>
 </html>
