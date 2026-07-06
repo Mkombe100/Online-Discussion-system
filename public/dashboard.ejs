@@ -806,19 +806,36 @@
         document.getElementById('modalCancelBtn').onclick = closeModal;
     }
     function closeModal() { document.getElementById('globalModal').classList.remove('active'); }
+function openCreateRoomModal() {
+    openModal(
+        "Create Quick Room",
+        `<p style="margin-bottom:1rem;">Start an instant meeting.</p>`,
+        "Create & Join",
+        async () => {
+            try {
+                const response = await fetch("/createRoom", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
 
-    function openCreateRoomModal() {
-        openModal("Create Quick Room", `<p style="margin-bottom:1rem;">Start an instant meeting. A new room code will be generated.</p><div class="field"><label>Room Code Preview</label><input type="text" id="previewRoomCode" readonly placeholder="generating..."></div>`, "Create & Join", () => {
-            const newCode = Math.floor(10000 + Math.random() * 90000);
-            let count = parseInt(localStorage.getItem('quickRoomsCount') || '0');
-            localStorage.setItem('quickRoomsCount', count+1);
-            updateStats();
-            showToast(`Room ${newCode} created! Joining...`, "success");
-            setTimeout(() => { window.location.href = `/room.html?room=${newCode}`; }, 400);
-        }, "Cancel");
-        setTimeout(() => { const inp = document.getElementById('previewRoomCode'); if(inp) inp.value = Math.floor(10000+Math.random()*90000); }, 20);
-    }
+                const data = await response.json();
 
+                if (data.success) {
+                    window.location.href = data.roomUrl;
+                } else {
+                    showToast("Failed to create room", "error");
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast("Server error", "error");
+            }
+        },
+        "Cancel"
+    );
+}
     function openJoinRoomModal() {
         const modalBody = `
             <div class="field">
