@@ -70,6 +70,14 @@ app.get('/dashboard', (req, res) => {
   });
 });
 
+app.get("/room.html", (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.redirect("/login");
+    }
+
+    res.sendFile(path.join(__dirname, "..", "public", "room.html"));
+});
+
 // USER INFO API
 app.get('/api/user', (req, res) => {
   if (!req.session || !req.session.user) {
