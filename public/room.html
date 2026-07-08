@@ -107,9 +107,7 @@
             height: 100%;
             object-fit: cover;
         }
-        .AA,
-        .part-videos,
-        video {
+        .AA, .part-videos, video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -185,6 +183,7 @@
             align-items: center;
             gap: 12px;
             padding: 12px;
+            flex-wrap: wrap;
         }
         .but-con,
         .close-button {
@@ -228,54 +227,16 @@
             font-weight: 800;
         }
 
-        @media (max-width: 860px) {
-            body {
-                overflow: auto;
-            }
-            .meeting-shell {
-                min-height: 100vh;
-                height: auto;
-                padding: 12px;
-            }
-            .meeting-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-            .header-actions {
-                width: 100%;
-            }
-            .pill,
-            .mini-btn {
-                flex: 1;
-                justify-content: center;
-            }
-            .meeting-main {
-                grid-template-columns: 1fr;
-            }
-            .stage {
-                aspect-ratio: 16 / 9;
-            }
-            .participants-panel {
-                max-height: 280px;
-            }
-            .participants {
-                grid-template-columns: repeat(2, 1fr);
-                grid-auto-rows: auto;
-            }
-            .controls {
-                position: sticky;
-                bottom: 0;
-                flex-wrap: wrap;
-            }
-            .but-con,
-            .close-button {
-                min-width: 64px;
-                flex: 1;
-            }
-            .myVid {
-                bottom: 15px;
-                left: 15px;
-            }
+        /* Notes Panel */
+        .notes-panel {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -289,18 +250,15 @@
         <div class="header-actions">
             <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
             <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
-                <i class="fa-solid fa-link"></i>
-                Invite
+                <i class="fa-solid fa-link"></i> Invite
             </button>
         </div>
     </header>
 
     <main class="meeting-main">
         <section class="stage">
-            <!-- Main stage area (remote videos / screen share will go here) -->
             <div id="mainVideoContainer" style="width:100%; height:100%;"></div>
             
-            <!-- Draggable local video -->
             <div class="myVid" id="localVideoContainer">
                 <video id="localVideo" class="video1234" autoplay playsinline muted></video>
                 <div class="video-badge">You</div>
@@ -331,6 +289,10 @@
             <i class="fa-solid fa-display"></i>
             <span>Share</span>
         </button>
+        <button class="but-con" id="notesBtn" type="button" title="Shared Notes">
+            <i class="fa-solid fa-note-sticky"></i>
+            <span>Notes</span>
+        </button>
         <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
             <i class="fa-solid fa-copy"></i>
             <span>Copy</span>
@@ -342,6 +304,24 @@
     </footer>
 </div>
 
+<!-- Notes Panel -->
+<div id="notesPanel" class="notes-panel">
+    <div style="background:#1e2937; width:90%; max-width:720px; border-radius:12px; padding:20px; max-height:88vh; overflow:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #475569; padding-bottom:15px;">
+            <h2 style="color:#f8fafc;">📝 Shared Notes & Documents</h2>
+            <button id="closeNotesBtn" style="background:none; border:none; color:#f8fafc; font-size:28px; cursor:pointer;">×</button>
+        </div>
+
+        <div id="notesList" style="margin:15px 0; min-height:200px;"></div>
+
+        <div id="uploadSection" style="display:none; margin-top:20px; padding:20px; border:2px dashed #64748b; border-radius:8px; text-align:center;">
+            <p style="margin-bottom:12px; color:#94a3b8;">Upload file (PDF, Image, TXT, etc.)</p>
+            <input type="file" id="noteFileInput" accept=".pdf,.jpg,.jpeg,.png,.txt,.docx" style="margin-bottom:12px;">
+            <button id="uploadNoteBtn" style="padding:10px 24px; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer;">Upload File</button>
+        </div>
+    </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
 
@@ -349,16 +329,9 @@
     // Draggable local video
     const box = document.getElementById("localVideoContainer");
     let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let initialLeft = 0;
-    let initialTop = 0;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
 
-    box.addEventListener("pointerdown", startDrag);
-    document.addEventListener("pointermove", moveDrag);
-    document.addEventListener("pointerup", endDrag);
-
-    function startDrag(e) {
+    box.addEventListener("pointerdown", (e) => {
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
@@ -366,20 +339,20 @@
         initialTop = box.offsetTop;
         box.style.cursor = "grabbing";
         box.setPointerCapture(e.pointerId);
-    }
+    });
 
-    function moveDrag(e) {
+    document.addEventListener("pointermove", (e) => {
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         box.style.left = (initialLeft + dx) + "px";
         box.style.top = (initialTop + dy) + "px";
-    }
+    });
 
-    function endDrag() {
+    document.addEventListener("pointerup", () => {
         isDragging = false;
         box.style.cursor = "grab";
-    }
+    });
 </script>
 </body>
 </html>
