@@ -12,12 +12,12 @@ const screenBtn = document.getElementById("screenBtn");
 const copyLinkBtn = document.getElementById("copyLinkBtn");
 const copyLinkBtnFooter = document.getElementById("copyLinkBtnFooter");
 const leaveBtn = document.getElementById("leaveBtn");
-const notesBtn = document.getElementById("notesBtn");
-const notesPanel = document.getElementById("notesPanel");
-const closeNotesBtn = document.getElementById("closeNotesBtn");
-const uploadNewNoteBtn = document.getElementById("uploadNewNoteBtn");
-const hiddenFileInput = document.getElementById("hiddenFileInput");
+
 const notesList = document.getElementById("notesList");
+const noteInput = document.getElementById("noteInput");
+const sendNoteBtn = document.getElementById("sendNoteBtn");
+const notesInputArea = document.getElementById("notesInputArea");
+const creatorBadge = document.getElementById("creatorBadge");
 
 let localStream;
 let screenStream;
@@ -39,76 +39,45 @@ const config = {
 const roomId = new URLSearchParams(window.location.search).get("room") || "test";
 roomCodeLabel.textContent = roomId;
 
-// ================== NOTES FEATURE ==================
-notesBtn.addEventListener("click", () => {
-    notesPanel.style.display = "flex";
-    renderNotes();
+// ================== SHARED NOTES ==================
+sendNoteBtn.addEventListener("click", () => {
+  const text = noteInput.value.trim();
+  if (text && isRoomCreator) {
+    socket.emit("new-note", { text });
+    noteInput.value = "";
+  }
 });
 
-closeNotesBtn.addEventListener("click", () => {
-    notesPanel.style.display = "none";
-});
-
-uploadNewNoteBtn.addEventListener("click", () => {
-    if (!isRoomCreator) return alert("Only the room creator can add notes.");
-    hiddenFileInput.click();
-});
-
-hiddenFileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-        return alert("File is too large. Maximum size is 10MB.");
-    }
-
-    const reader = new FileReader();
-    reader.onload = function() {
-        socket.emit("upload-note", {
-            filename: file.name,
-            size: file.size,
-            data: reader.result
-        });
-    };
-    reader.readAsDataURL(file);
-
-    hiddenFileInput.value = "";
+noteInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendNoteBtn.click();
 });
 
 socket.on("room-creator-status", (status) => {
-    isRoomCreator = status;
+  isRoomCreator = status;
+  notesInputArea.style.display = status ? "flex" : "none";
+  creatorBadge.style.display = status ? "inline" : "none";
 });
 
 socket.on("note-received", (note) => {
-    notes.push(note);
-    renderNotes();
+  notes.push(note);
+  renderNotes();
 });
 
 function renderNotes() {
-    if (notes.length === 0) {
-        notesList.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:50px 20px;">No notes shared yet.</p>`;
-        return;
-    }
+  notesList.innerHTML = notes.length === 0 
+    ? "<p style='color:#94a3b8; text-align:center; padding:30px 0;'>No notes yet.</p>" 
+    : "";
 
-    notesList.innerHTML = "";
-    notes.forEach((note) => {
-        const div = document.createElement("div");
-        div.style.cssText = "background:#334155; padding:14px; margin-bottom:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;";
-        div.innerHTML = `
-            <div>
-                <strong>${note.filename}</strong><br>
-                <small style="color:#94a3b8;">${(note.size/1024).toFixed(1)} KB</small>
-            </div>
-            <a href="${note.data}" download="${note.filename}" 
-               style="background:#3b82f6; color:white; padding:10px 16px; border-radius:6px; text-decoration:none;">
-               Download
-            </a>
-        `;
-        notesList.appendChild(div);
-    });
+  notes.forEach(note => {
+    const div = document.createElement("div");
+    div.className = "note-item";
+    div.textContent = note.text;
+    notesList.appendChild(div);
+  });
+  notesList.scrollTop = notesList.scrollHeight;
 }
 
-// ================== WEBRTC & MEETING FUNCTIONS ==================
+// ================== WEBRTC FUNCTIONS ==================
 function updateParticipantCount() {
   const count = Object.keys(peers).length + 1;
   participantCount.textContent = count;
@@ -136,7 +105,7 @@ async function copyInviteLink() {
   const inviteLink = `${window.location.origin}/room.html?room=${encodeURIComponent(roomId)}`;
   try {
     await navigator.clipboard.writeText(inviteLink);
-    alert("Invite link copied!");
+    alert("Invite link copied");
   } catch (err) {
     prompt("Copy this invite link", inviteLink);
   }
@@ -145,16 +114,16 @@ async function copyInviteLink() {
 function leaveRoom() {
   const result = confirm("Are you sure you want to leave this room?");
   if (!result) return;
-  if (localStream) localStream.getTracks().forEach(t => t.stop());
-  if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-  Object.values(peers).forEach(peer => peer.close());
+  if (localStream) localStream.getTracks().forEach((t) => t.stop());
+  if (screenStream) screenStream.getTracks().forEach((t) => t.stop());
+  Object.values(peers).forEach((peer) => peer.close());
   socket.disconnect();
   window.location.href = "/dashboard";
 }
 
 function replaceVideoTrack(newTrack) {
-  Object.values(peers).forEach(peer => {
-    const sender = peer.getSenders().find(s => s.track && s.track.kind === "video");
+  Object.values(peers).forEach((peer) => {
+    const sender = peer.getSenders().find((s) => s.track && s.track.kind === "video");
     if (sender) sender.replaceTrack(newTrack);
   });
 }
@@ -175,7 +144,7 @@ async function startScreenShare() {
 
 function stopScreenShare() {
   if (!screenStream || !localStream) return;
-  screenStream.getTracks().forEach(t => t.stop());
+  screenStream.getTracks().forEach((t) => t.stop());
   screenStream = null;
   const cameraTrack = localStream.getVideoTracks()[0];
   replaceVideoTrack(cameraTrack);
@@ -184,7 +153,8 @@ function stopScreenShare() {
   screenBtn.querySelector("span").textContent = "Share";
 }
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+navigator.mediaDevices
+  .getUserMedia({ video: true, audio: true })
   .then((stream) => {
     localStream = stream;
     localVideo.srcObject = stream;
@@ -223,17 +193,19 @@ function createVideo(id) {
 
 function createPeer(id) {
   const pc = new RTCPeerConnection(config);
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-
+  localStream.getTracks().forEach((track) => {
+    pc.addTrack(track, localStream);
+  });
   pc.ontrack = (event) => {
-    const stream = event.streams[0];
+    const stream = event.streams && event.streams[0];
     if (!stream) return;
-    if (!videoSlots[id]) videoSlots[id] = createVideo(id);
+    if (!videoSlots[id]) {
+      videoSlots[id] = createVideo(id);
+    }
     const video = videoSlots[id];
     video.srcObject = stream;
     video.play().catch(() => {});
   };
-
   pc.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice-candidate", { to: id, candidate: event.candidate });
@@ -242,7 +214,6 @@ function createPeer(id) {
   return pc;
 }
 
-// Socket Events
 socket.on("existing-users", async (users) => {
   users = users.slice(0, 3);
   for (let id of users) {
@@ -297,7 +268,6 @@ socket.on("user-left", (id) => {
   updateParticipantCount();
 });
 
-// Button Events
 muteBtn.addEventListener("click", () => {
   const track = localStream.getAudioTracks()[0];
   if (!track) return;
