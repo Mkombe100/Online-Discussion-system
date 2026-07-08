@@ -97,22 +97,20 @@ app.get('/createRoom', (req, res) => {
 const rooms = {};
 
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
 
     if (!rooms[roomId]) {
       rooms[roomId] = {
         users: [],
-        creator: socket.id,   // First person to join is the creator
-        notes: []             // Store shared notes
+        creator: socket.id,   // First person = creator
+        notes: []
       };
     }
 
     const room = rooms[roomId];
 
-    // Tell the user if they are the room creator
+    // Tell user if they are creator
     socket.emit("room-creator-status", room.creator === socket.id);
 
     const others = room.users;
@@ -121,50 +119,39 @@ io.on('connection', (socket) => {
     room.users.push(socket.id);
     socket.to(roomId).emit('user-joined', socket.id);
 
-    // ====================== NOTES FEATURE ======================
-    socket.on("upload-note", (noteData) => {
-      // Only room creator can upload notes
-      if (room.creator !== socket.id) return;
-
-      room.notes.push(noteData);
-      // Broadcast to everyone in the room
-      io.to(roomId).emit("note-received", noteData);
+    // Shared Notes
+    socket.on("new-note", (noteData) => {
+      if (room.creator !== socket.id) return; // Only creator can add notes
+      const note = { text: noteData.text, timestamp: Date.now() };
+      room.notes.push(note);
+      io.to(roomId).emit("note-received", note);
     });
 
     socket.on('disconnect', () => {
       if (room) {
         room.users = room.users.filter(id => id !== socket.id);
-
-        // If creator leaves, transfer ownership to next user
-        if (room.creator === socket.id && room.users.length > 0) {
-          room.creator = room.users[0];
-        }
-
         if (room.users.length === 0) {
           delete rooms[roomId];
-        } else {
-          socket.to(roomId).emit('user-left', socket.id);
+        } else if (room.creator === socket.id && room.users.length > 0) {
+          room.creator = room.users[0]; // Transfer ownership
         }
+        socket.to(roomId).emit('user-left', socket.id);
       }
-      console.log(`User disconnected: ${socket.id}`);
     });
   });
 
-  // WebRTC signaling
+  // WebRTC
   socket.on('offer', ({ to, offer }) => {
     io.to(to).emit('offer', { from: socket.id, offer });
   });
-
   socket.on('answer', ({ to, answer }) => {
     io.to(to).emit('answer', { from: socket.id, answer });
   });
-
   socket.on('ice-candidate', ({ to, candidate }) => {
     io.to(to).emit('ice-candidate', { from: socket.id, candidate });
   });
 });
 
-// Start Server
 const PORT = process.env.PORT || 3030;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
