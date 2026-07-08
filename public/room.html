@@ -19,9 +19,6 @@
             overflow: hidden;
             position: relative;
         }
-        button {
-            font: inherit;
-        }
         .meeting-shell {
             height: 100vh;
             display: grid;
@@ -68,7 +65,7 @@
 
         .meeting-main {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
+            grid-template-columns: minmax(0, 1fr) 340px;
             gap: 14px;
             min-height: 0;
         }
@@ -92,11 +89,8 @@
             z-index: 100;
             cursor: grab;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
-            user-select: none;
-            touch-action: none;
         }
-        .myVid:active { cursor: grabbing; }
-        .video1234, .AA, .part-videos, video {
+        .video1234, .part-videos, video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -111,7 +105,6 @@
             padding: 8px 10px;
             border-radius: 8px;
             font-weight: 800;
-            z-index: 101;
         }
         .camera-message {
             position: absolute;
@@ -120,20 +113,63 @@
             place-items: center;
             color: #cbd5e1;
             pointer-events: none;
-            z-index: 10;
         }
         .camera-message.hidden { display: none; }
 
-        .participants-panel {
-            min-height: 0;
+        .participants-panel, .notes-area {
             background: #111c2e;
             border: 1px solid rgba(148, 163, 184, 0.2);
             border-radius: 8px;
             padding: 14px;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            gap: 12px;
         }
+        .notes-area {
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+            background: #0a1421;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .note-item {
+            background: #1e293b;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .notes-input-area {
+            display: flex;
+            gap: 8px;
+        }
+        .notes-input-area input {
+            flex: 1;
+            padding: 12px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #f8fafc;
+        }
+        .notes-input-area button {
+            padding: 0 24px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+
         .controls {
             min-height: 78px;
             background: rgba(15, 23, 42, 0.92);
@@ -159,24 +195,10 @@
             cursor: pointer;
             color: #e2e8f0;
             background: #1e293b;
-            transition: all 0.2s;
         }
         .but-con:hover { background: #334155; }
-        .but-con.active-off { background: #7f1d1d; }
         .close-button { background: #dc2626; }
         .close-button:hover { background: #b91c1c; }
-
-        /* Notes Panel */
-        .notes-panel {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -188,7 +210,7 @@
         </div>
         <div class="header-actions">
             <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
-            <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
+            <button class="mini-btn" id="copyLinkBtn" type="button">
                 <i class="fa-solid fa-link"></i> Invite
             </button>
         </div>
@@ -204,80 +226,56 @@
             <p class="camera-message" id="cameraMessage">Starting camera...</p>
         </section>
 
-        <aside class="participants-panel">
-            <div class="panel-heading">
-                <h2>Participants</h2>
-                <span id="remoteCount">0 online</span>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Participants -->
+            <aside class="participants-panel">
+                <div class="panel-heading">
+                    <h2>Participants</h2>
+                    <span id="remoteCount">0 online</span>
+                </div>
+                <div class="participants" id="participants"></div>
+            </aside>
+
+            <!-- Shared Notes -->
+            <div class="notes-area">
+                <div class="notes-header">
+                    <span>📝 Shared Notes</span>
+                    <span id="creatorBadge" style="color:#3b82f6; font-size:13px; display:none;">(Creator Mode)</span>
+                </div>
+                <div class="notes-list" id="notesList"></div>
+                <div class="notes-input-area" id="notesInputArea" style="display:none;">
+                    <input type="text" id="noteInput" placeholder="Type a note here...">
+                    <button id="sendNoteBtn">Send</button>
+                </div>
             </div>
-            <div class="participants" id="participants"></div>
-        </aside>
+        </div>
     </main>
 
     <footer class="controls">
-        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
-            <i class="fa-solid fa-microphone"></i><span>Mic</span>
+        <button class="but-con" id="muteBtn" type="button">
+            <i class="fa-solid fa-microphone"></i>
+            <span>Mic</span>
         </button>
-        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
-            <i class="fa-solid fa-video"></i><span>Camera</span>
+        <button class="but-con" id="cameraBtn" type="button">
+            <i class="fa-solid fa-video"></i>
+            <span>Camera</span>
         </button>
-        <button class="but-con" id="screenBtn" type="button" title="Share screen">
-            <i class="fa-solid fa-display"></i><span>Share</span>
+        <button class="but-con" id="screenBtn" type="button">
+            <i class="fa-solid fa-display"></i>
+            <span>Share</span>
         </button>
-        <button class="but-con" id="notesBtn" type="button" title="Shared Notes">
-            <i class="fa-solid fa-note-sticky"></i><span>Notes</span>
+        <button class="but-con" id="copyLinkBtnFooter" type="button">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
         </button>
-        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
-            <i class="fa-solid fa-copy"></i><span>Copy</span>
-        </button>
-        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
-            <i class="fa-solid fa-phone"></i><span>Leave</span>
+        <button class="close-button" id="leaveBtn" type="button">
+            <i class="fa-solid fa-phone"></i>
+            <span>Leave</span>
         </button>
     </footer>
 </div>
 
-<!-- Notes Panel -->
-<div id="notesPanel" class="notes-panel">
-    <div style="background:#1e2937; width:90%; max-width:700px; border-radius:12px; padding:25px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <h2>📝 Shared Notes & Documents</h2>
-            <button id="closeNotesBtn" style="background:none; border:none; font-size:28px; color:#f8fafc; cursor:pointer;">×</button>
-        </div>
-        
-        <div id="notesList" style="min-height:200px; margin:15px 0;"></div>
-        
-        <button id="uploadNewNoteBtn" style="width:100%; padding:14px; background:#3b82f6; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-            + Add New Note / Document
-        </button>
-    </div>
-</div>
-
-<!-- Hidden File Input -->
-<input type="file" id="hiddenFileInput" accept=".pdf,.jpg,.jpeg,.png,.txt,.docx" style="display:none;">
-
 <script src="/socket.io/socket.io.js"></script>
 <script src="room.js"></script>
-
-<script>
-    // Draggable Local Video
-    const box = document.getElementById("localVideoContainer");
-    let isDragging = false, startX, startY, initialLeft, initialTop;
-
-    box.addEventListener("pointerdown", e => {
-        isDragging = true;
-        startX = e.clientX; startY = e.clientY;
-        initialLeft = box.offsetLeft; initialTop = box.offsetTop;
-        box.style.cursor = "grabbing";
-        box.setPointerCapture(e.pointerId);
-    });
-    document.addEventListener("pointermove", e => {
-        if (!isDragging) return;
-        box.style.left = (initialLeft + e.clientX - startX) + "px";
-        box.style.top = (initialTop + e.clientY - startY) + "px";
-    });
-    document.addEventListener("pointerup", () => {
-        isDragging = false;
-        box.style.cursor = "grab";
-    });
-</script>
 </body>
 </html>
