@@ -1,358 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimbweta Meeting</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            min-height: 100vh;
-            font-family: Inter, "Segoe UI", Arial, sans-serif;
-            background: #0f172a;
-            color: #f8fafc;
-            overflow: hidden;
-            position: relative;
-        }
-        button {
-            font: inherit;
-        }
-        .meeting-shell {
-            height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            gap: 14px;
-            padding: 18px;
-        }
-        .meeting-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-        }
-        .label {
-            color: #93c5fd;
-            font-size: 13px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 4px;
-        }
-        .meeting-header h1 {
-            font-size: clamp(24px, 4vw, 34px);
-        }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .pill,
-        .mini-btn {
-            min-height: 42px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(148, 163, 184, 0.28);
-            background: rgba(15, 23, 42, 0.8);
-            color: #e2e8f0;
-            padding: 10px 12px;
-            font-weight: 800;
-        }
-        .mini-btn {
-            cursor: pointer;
-        }
-        .mini-btn:hover {
-            background: #1e293b;
-        }
-        .meeting-main {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
-            gap: 14px;
-            min-height: 0;
-        }
-        .stage {
-            position: relative;
-            min-height: 0;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #020617;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-        }
-        .myVid {
-            width: clamp(7rem, 18vw, 12rem);
-            height: clamp(7rem, 18vw, 12rem);
-            border: 3px solid #ef4444;
-            border-radius: 50%;
-            overflow: hidden;
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 100;
-            cursor: grab;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            user-select: none;
-            touch-action: none;
-        }
-        .myVid:active {
-            cursor: grabbing;
-        }
-        .video1234 {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .AA, .part-videos, video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: #020617;
-        }
-        .video-badge {
-            position: absolute;
-            left: 14px;
-            bottom: 14px;
-            background: rgba(15, 23, 42, 0.82);
-            color: #f8fafc;
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-weight: 800;
-            z-index: 101;
-        }
-        .camera-message {
-            position: absolute;
-            inset: 0;
-            display: grid;
-            place-items: center;
-            color: #cbd5e1;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .camera-message.hidden {
-            display: none;
-        }
-        .participants-panel {
-            min-height: 0;
-            background: #111c2e;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            padding: 14px;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            gap: 12px;
-        }
-        .panel-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .panel-heading h2 {
-            font-size: 18px;
-        }
-        .panel-heading span {
-            color: #94a3b8;
-            font-size: 13px;
-            font-weight: 800;
-        }
-        .participants {
-            min-height: 0;
-            display: grid;
-            grid-auto-rows: minmax(130px, 1fr);
-            gap: 10px;
-            overflow: auto;
-        }
-        .part-videos {
-            aspect-ratio: 16 / 9;
-            height: auto;
-            border-radius: 8px;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-        }
-        .controls {
-            min-height: 78px;
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            flex-wrap: wrap;
-        }
-        .but-con,
-        .close-button {
-            border: 0;
-            min-width: 82px;
-            height: 54px;
-            border-radius: 8px;
-            display: inline-flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            color: #e2e8f0;
-            background: #1e293b;
-            transition: background 0.2s, transform 0.2s;
-        }
-        .but-con:hover {
-            background: #334155;
-        }
-        .but-con.active-off {
-            background: #7f1d1d;
-        }
-        .close-button {
-            background: #dc2626;
-        }
-        .close-button:hover {
-            background: #b91c1c;
-        }
-        .but-con:active,
-        .close-button:active {
-            transform: translateY(1px);
-        }
-        .but-con i,
-        .close-button i {
-            font-size: 18px;
-        }
-        .but-con span,
-        .close-button span {
-            font-size: 12px;
-            font-weight: 800;
-        }
+const socket = io();
 
-        /* Notes Panel */
-        .notes-panel {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-</head>
-<body>
-<div class="meeting-shell">
-    <header class="meeting-header">
-        <div>
-            <p class="label">Live meeting</p>
-            <h1>Room <span id="roomCodeLabel">----</span></h1>
-        </div>
-        <div class="header-actions">
-            <span class="pill"><i class="fa-solid fa-user-group"></i> <span id="participantCount">1</span></span>
-            <button class="mini-btn" id="copyLinkBtn" type="button" title="Copy invite link">
-                <i class="fa-solid fa-link"></i> Invite
-            </button>
-        </div>
-    </header>
+const localVideo = document.getElementById("localVideo");
+const participants = document.getElementById("participants");
+const roomCodeLabel = document.getElementById("roomCodeLabel");
+const participantCount = document.getElementById("participantCount");
+const remoteCount = document.getElementById("remoteCount");
+const cameraMessage = document.getElementById("cameraMessage");
+const muteBtn = document.getElementById("muteBtn");
+const cameraBtn = document.getElementById("cameraBtn");
+const screenBtn = document.getElementById("screenBtn");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
+const copyLinkBtnFooter = document.getElementById("copyLinkBtnFooter");
+const leaveBtn = document.getElementById("leaveBtn");
+const notesBtn = document.getElementById("notesBtn");
+const notesPanel = document.getElementById("notesPanel");
+const closeNotesBtn = document.getElementById("closeNotesBtn");
+const noteFileInput = document.getElementById("noteFileInput");
+const uploadNoteBtn = document.getElementById("uploadNoteBtn");
+const notesList = document.getElementById("notesList");
+const uploadSection = document.getElementById("uploadSection");
 
-    <main class="meeting-main">
-        <section class="stage">
-            <div id="mainVideoContainer" style="width:100%; height:100%;"></div>
-            
-            <div class="myVid" id="localVideoContainer">
-                <video id="localVideo" class="video1234" autoplay playsinline muted></video>
-                <div class="video-badge">You</div>
+let localStream;
+let screenStream;
+let peers = {};
+let videoSlots = {};
+let isRoomCreator = false;
+let notes = [];
+
+const roomId = new URLSearchParams(window.location.search).get("room") || "test";
+roomCodeLabel.textContent = roomId;
+
+// ================== NOTES FUNCTIONS ==================
+notesBtn.addEventListener("click", () => {
+    notesPanel.style.display = "flex";
+    renderNotes();
+});
+
+closeNotesBtn.addEventListener("click", () => {
+    notesPanel.style.display = "none";
+});
+
+socket.on("room-creator-status", (status) => {
+    isRoomCreator = status;
+    uploadSection.style.display = status ? "block" : "none";
+});
+
+socket.on("note-received", (note) => {
+    notes.push(note);
+    renderNotes();   // Refresh list
+});
+
+function renderNotes() {
+    if (notes.length === 0) {
+        notesList.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:40px 20px;">No notes shared yet.</p>`;
+        return;
+    }
+
+    notesList.innerHTML = "";
+    notes.forEach(note => {
+        const div = document.createElement("div");
+        div.style.cssText = "background:#334155; padding:14px; margin-bottom:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;";
+        div.innerHTML = `
+            <div>
+                <strong>${note.filename}</strong><br>
+                <small style="color:#94a3b8;">${(note.size/1024).toFixed(1)} KB</small>
             </div>
-
-            <p class="camera-message" id="cameraMessage">Starting camera...</p>
-        </section>
-
-        <aside class="participants-panel">
-            <div class="panel-heading">
-                <h2>Participants</h2>
-                <span id="remoteCount">0 online</span>
-            </div>
-            <div class="participants" id="participants"></div>
-        </aside>
-    </main>
-
-    <footer class="controls">
-        <button class="but-con" id="muteBtn" type="button" title="Mute microphone">
-            <i class="fa-solid fa-microphone"></i>
-            <span>Mic</span>
-        </button>
-        <button class="but-con" id="cameraBtn" type="button" title="Turn camera off">
-            <i class="fa-solid fa-video"></i>
-            <span>Camera</span>
-        </button>
-        <button class="but-con" id="screenBtn" type="button" title="Share screen">
-            <i class="fa-solid fa-display"></i>
-            <span>Share</span>
-        </button>
-        <button class="but-con" id="notesBtn" type="button" title="Shared Notes">
-            <i class="fa-solid fa-note-sticky"></i>
-            <span>Notes</span>
-        </button>
-        <button class="but-con" id="copyLinkBtnFooter" type="button" title="Copy invite link">
-            <i class="fa-solid fa-copy"></i>
-            <span>Copy</span>
-        </button>
-        <button class="close-button" id="leaveBtn" type="button" title="Leave meeting">
-            <i class="fa-solid fa-phone"></i>
-            <span>Leave</span>
-        </button>
-    </footer>
-</div>
-
-<!-- Notes Panel -->
-<div id="notesPanel" class="notes-panel">
-    <div style="background:#1e2937; width:90%; max-width:720px; border-radius:12px; padding:20px; max-height:88vh; overflow:auto;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #475569; padding-bottom:15px;">
-            <h2 style="color:#f8fafc;">📝 Shared Notes & Documents</h2>
-            <button id="closeNotesBtn" style="background:none; border:none; color:#f8fafc; font-size:28px; cursor:pointer;">×</button>
-        </div>
-
-        <div id="notesList" style="margin:15px 0; min-height:200px;"></div>
-
-        <div id="uploadSection" style="display:none; margin-top:20px; padding:20px; border:2px dashed #64748b; border-radius:8px; text-align:center;">
-            <p style="margin-bottom:12px; color:#94a3b8;">Upload file (PDF, Image, TXT, etc.)</p>
-            <input type="file" id="noteFileInput" accept=".pdf,.jpg,.jpeg,.png,.txt,.docx" style="margin-bottom:12px;">
-            <button id="uploadNoteBtn" style="padding:10px 24px; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer;">Upload File</button>
-        </div>
-    </div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="room.js"></script>
-
-<script>
-    // Draggable local video
-    const box = document.getElementById("localVideoContainer");
-    let isDragging = false;
-    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
-
-    box.addEventListener("pointerdown", (e) => {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        initialLeft = box.offsetLeft;
-        initialTop = box.offsetTop;
-        box.style.cursor = "grabbing";
-        box.setPointerCapture(e.pointerId);
+            <a href="${note.data}" download="${note.filename}" 
+               style="background:#3b82f6; color:white; padding:10px 16px; border-radius:6px; text-decoration:none;">
+               Download
+            </a>
+        `;
+        notesList.appendChild(div);
     });
+}
 
-    document.addEventListener("pointermove", (e) => {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        box.style.left = (initialLeft + dx) + "px";
-        box.style.top = (initialTop + dy) + "px";
-    });
+uploadNoteBtn.addEventListener("click", () => {
+    const file = noteFileInput.files[0];
+    if (!file) return alert("Please select a file first");
 
-    document.addEventListener("pointerup", () => {
-        isDragging = false;
-        box.style.cursor = "grab";
-    });
-</script>
-</body>
-</html>
+    if (file.size > 10 * 1024 * 1024) {
+        return alert("File is too large. Maximum size is 10MB");
+    }
+
+    const reader = new FileReader();
+    reader.onload = function() {
+        socket.emit("upload-note", {
+            filename: file.name,
+            size: file.size,
+            data: reader.result
+        });
+        noteFileInput.value = ""; // reset input
+    };
+    reader.readAsDataURL(file);
+});
+
+// ================== YOUR EXISTING CODE (WebRTC) ==================
+// Paste all your original code here (getUserMedia, createPeer, socket listeners, etc.)
+// ... [Keep everything from navigator.mediaDevices.getUserMedia down to the end]
