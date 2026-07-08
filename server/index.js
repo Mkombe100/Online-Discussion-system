@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 // STATIC FILES
 app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
 
-// ROUTES
+// ROUTES (must be registered after session middleware)
 app.use(register);
 app.use(login);
 app.use(createRoom);
@@ -57,21 +57,24 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
-// DASHBOARD
+// DASHBOARD - render EJS view
 app.get('/dashboard', (req, res) => {
+  console.log('SESSION:', req.session);
+
   if (!req.session || !req.session.user) {
     return res.redirect('/login');
   }
+
   res.render('dashboard', {
     username: req.session.user.username
   });
 });
 
-// ROOM PAGE
 app.get("/room.html", (req, res) => {
     if (!req.session || !req.session.user) {
         return res.redirect("/login");
     }
+
     res.sendFile(path.join(__dirname, "..", "public", "room.html"));
 });
 
@@ -80,6 +83,7 @@ app.get('/api/user', (req, res) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({ message: 'Not logged in' });
   }
+
   res.json({
     name: req.session.user.username,
     email: req.session.user.email,
@@ -93,66 +97,44 @@ app.get('/createRoom', (req, res) => {
   res.render('dashboard', { username: req.session.user.username });
 });
 
-// ====================== SOCKET.IO ======================
+// SOCKET.IO
 const rooms = {};
 
 io.on('connection', (socket) => {
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
 
-    if (!rooms[roomId]) {
-      rooms[roomId] = {
-        users: [],
-        creator: socket.id,   // First person = creator
-        notes: []
-      };
-    }
+    if (!rooms[roomId]) rooms[roomId] = [];
 
-    const room = rooms[roomId];
+    const others = rooms[roomId];
 
-    // Tell user if they are creator
-    socket.emit("room-creator-status", room.creator === socket.id);
-
-    const others = room.users;
     socket.emit('existing-users', others);
 
-    room.users.push(socket.id);
+    rooms[roomId].push(socket.id);
+
     socket.to(roomId).emit('user-joined', socket.id);
 
-    // Shared Notes
-    socket.on("new-note", (noteData) => {
-      if (room.creator !== socket.id) return; // Only creator can add notes
-      const note = { text: noteData.text, timestamp: Date.now() };
-      room.notes.push(note);
-      io.to(roomId).emit("note-received", note);
-    });
-
     socket.on('disconnect', () => {
-      if (room) {
-        room.users = room.users.filter(id => id !== socket.id);
-        if (room.users.length === 0) {
-          delete rooms[roomId];
-        } else if (room.creator === socket.id && room.users.length > 0) {
-          room.creator = room.users[0]; // Transfer ownership
-        }
-        socket.to(roomId).emit('user-left', socket.id);
-      }
+      if (rooms[roomId]) rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
+      socket.to(roomId).emit('user-left', socket.id);
     });
   });
 
-  // WebRTC
   socket.on('offer', ({ to, offer }) => {
     io.to(to).emit('offer', { from: socket.id, offer });
   });
+
   socket.on('answer', ({ to, answer }) => {
     io.to(to).emit('answer', { from: socket.id, answer });
   });
+
   socket.on('ice-candidate', ({ to, candidate }) => {
     io.to(to).emit('ice-candidate', { from: socket.id, candidate });
   });
 });
 
 const PORT = process.env.PORT || 3030;
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
