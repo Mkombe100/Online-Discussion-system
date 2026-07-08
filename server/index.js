@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 // STATIC FILES
 app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
 
-// ROUTES (must be registered after session middleware)
+// ROUTES
 app.use(register);
 app.use(login);
 app.use(createRoom);
@@ -57,24 +57,21 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
-// DASHBOARD - render EJS view
+// DASHBOARD
 app.get('/dashboard', (req, res) => {
-  console.log('SESSION:', req.session);
-
   if (!req.session || !req.session.user) {
     return res.redirect('/login');
   }
-
   res.render('dashboard', {
     username: req.session.user.username
   });
 });
 
+// ROOM PAGE
 app.get("/room.html", (req, res) => {
     if (!req.session || !req.session.user) {
         return res.redirect("/login");
     }
-
     res.sendFile(path.join(__dirname, "..", "public", "room.html"));
 });
 
@@ -83,7 +80,6 @@ app.get('/api/user', (req, res) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({ message: 'Not logged in' });
   }
-
   res.json({
     name: req.session.user.username,
     email: req.session.user.email,
@@ -97,29 +93,64 @@ app.get('/createRoom', (req, res) => {
   res.render('dashboard', { username: req.session.user.username });
 });
 
-// SOCKET.IO
+// ====================== SOCKET.IO ======================
 const rooms = {};
 
 io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
 
-    if (!rooms[roomId]) rooms[roomId] = [];
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        users: [],
+        creator: socket.id,   // First person to join is the creator
+        notes: []             // Store shared notes
+      };
+    }
 
-    const others = rooms[roomId];
+    const room = rooms[roomId];
 
+    // Tell the user if they are the room creator
+    socket.emit("room-creator-status", room.creator === socket.id);
+
+    const others = room.users;
     socket.emit('existing-users', others);
 
-    rooms[roomId].push(socket.id);
-
+    room.users.push(socket.id);
     socket.to(roomId).emit('user-joined', socket.id);
 
+    // ====================== NOTES FEATURE ======================
+    socket.on("upload-note", (noteData) => {
+      // Only room creator can upload notes
+      if (room.creator !== socket.id) return;
+
+      room.notes.push(noteData);
+      // Broadcast to everyone in the room
+      io.to(roomId).emit("note-received", noteData);
+    });
+
     socket.on('disconnect', () => {
-      if (rooms[roomId]) rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
-      socket.to(roomId).emit('user-left', socket.id);
+      if (room) {
+        room.users = room.users.filter(id => id !== socket.id);
+
+        // If creator leaves, transfer ownership to next user
+        if (room.creator === socket.id && room.users.length > 0) {
+          room.creator = room.users[0];
+        }
+
+        if (room.users.length === 0) {
+          delete rooms[roomId];
+        } else {
+          socket.to(roomId).emit('user-left', socket.id);
+        }
+      }
+      console.log(`User disconnected: ${socket.id}`);
     });
   });
 
+  // WebRTC signaling
   socket.on('offer', ({ to, offer }) => {
     io.to(to).emit('offer', { from: socket.id, offer });
   });
@@ -133,8 +164,8 @@ io.on('connection', (socket) => {
   });
 });
 
+// Start Server
 const PORT = process.env.PORT || 3030;
-
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
