@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Room</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="controlls.css">
+
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{
+      width:100%;height:100%;overflow:hidden;
+      background-image:url("../assets/abc.jpg");
+      background-repeat:no-repeat;background-size:cover;
+      background-position:center;background-color:#0a1628;
+    }
+
+    main{
+      display:grid;
+      grid-template-columns:0px 65rem 1fr;
+      width:100vw;height:100vh;
+      position:relative;transition:.3s;
+    }
+    main.chat-open{
+      grid-template-columns:320px minmax(0,1fr) 18rem;
+    }
+
+    .ViewPoint{
+      display:flex;flex-direction:column;
+      margin:8px;border:2px solid white;
+      overflow:hidden;border-radius:8px;
+    }
+    #viewer{flex:1;position:relative;width:100%;height:100%}
+    #pdfViewer,#screenViewer{
+      width:100%;height:100%;border:none;display:block;
+    }
+    #screenViewer{
+      display:none;object-fit:contain;background:#000;
+    }
+
+    .videos{
+      display:grid;
+      grid-template-rows:1fr 1fr 1fr;
+      height:100%;
+      padding:8px 8px 8px 0;
+      gap:8px;min-height:0;
+    }
+    .video-slot{
+      border:2px solid greenyellow;
+      border-radius:8px;overflow:hidden;
+      background:#000;position:relative;min-height:0;
+    }
+    .video-slot video{
+      width:100%;height:100%;object-fit:cover;display:block;
+    }
+    .video-slot .placeholder{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      color:rgba(255,255,255,.4);font-size:.85rem;pointer-events:none;
+    }
+    .video-slot.sharing{
+      border-color:#00e5ff;
+      box-shadow:0 0 12px #00e5ff55;
+    }
+
+    .callCenter{background-color:darkred}
+
+    #chatPanel{
+      width:0;overflow:hidden;color:white;
+      display:flex;flex-direction:column;transition:.3s;
+      border:solid 2px green;
+      margin-top:8px;margin-bottom:8px;
+    }
+    main.chat-open #chatPanel{width:320px}
+
+    .chatHeader{
+      height:60px;display:flex;
+      justify-content:space-between;align-items:center;
+      padding:0 15px;border-bottom:1px solid #444;
+    }
+    .chatHeader button{
+      background:none;border:none;color:white;
+      cursor:pointer;font-size:18px;
+    }
+    #chatMessages{flex:1;overflow-y:auto;padding:15px}
+    .chatInput{
+      display:flex;padding:10px;gap:10px;
+      border-top:1px solid #444;
+    }
+    .chatInput input{
+      flex:1;padding:10px;border:none;
+      outline:none;border-radius:8px;
+    }
+    .chatInput button{
+      width:45px;border:none;background:#111;
+      color:white;border-radius:8px;cursor:pointer;
+    }
+
+    /* ===== SETTINGS MODAL ===== */
+    #settingsOverlay{
+      display:none;position:fixed;inset:0;
+      background:rgba(0,0,0,.65);z-index:9999;
+      align-items:center;justify-content:center;
+    }
+    #settingsOverlay.open{display:flex}
+
+    #settingsPanel{
+      width:min(420px,92vw);max-height:80vh;
+      background:#1a2332;border-radius:16px;
+      border:1px solid #334;color:#e8eef7;
+      display:flex;flex-direction:column;overflow:hidden;
+      box-shadow:0 20px 60px #000a;
+    }
+    #settingsPanel header{
+      padding:16px 20px;display:flex;
+      justify-content:space-between;align-items:center;
+      border-bottom:1px solid #334;
+      font-size:1.1rem;font-weight:600;
+    }
+    #settingsPanel header button{
+      background:none;border:none;color:#aaa;
+      font-size:1.2rem;cursor:pointer;
+    }
+    #settingsBody{padding:16px 20px;overflow-y:auto;flex:1}
+
+    .perm-section{margin-bottom:20px}
+    .perm-section h4{
+      font-size:.85rem;color:#8ab;margin-bottom:10px;
+      text-transform:uppercase;letter-spacing:.04em;
+    }
+    .perm-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 12px;background:#121a27;
+      border-radius:10px;margin-bottom:8px;
+    }
+    .perm-row .name{font-size:.95rem}
+    .perm-row .name small{
+      display:block;color:#6a7a90;font-size:.75rem;
+    }
+    .perm-toggles{display:flex;gap:14px}
+    .perm-toggles label{
+      display:flex;align-items:center;gap:6px;
+      font-size:.8rem;cursor:pointer;user-select:none;
+    }
+    .perm-toggles input{
+      accent-color:#00c853;width:16px;height:16px;
+    }
+    .host-badge{
+      background:#00c85333;color:#00e676;
+      font-size:.7rem;padding:2px 7px;
+      border-radius:20px;margin-left:6px;
+    }
+    .no-perm-msg{
+      color:#f88;font-size:.85rem;margin-top:8px;display:none;
+    }
+    .you-are-host{
+      background:#00c85322;border:1px solid #00c85355;
+      padding:10px 14px;border-radius:10px;
+      font-size:.85rem;margin-bottom:16px;
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <!-- Chat panel -->
+  <div id="chatPanel">
+    <div class="chatHeader">
+      <h3>Meeting Chat</h3>
+      <button id="closeChat"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="chatMessages"></div>
+    <div class="chatInput">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- Big shared area (PDF / Screen) -->
+  <div class="ViewPoint" id="ViewPoint">
+    <input type="file" id="pdfFile" accept="application/pdf" hidden>
+    <div id="viewer">
+      <iframe id="pdfViewer"></iframe>
+      <video id="screenViewer" autoplay playsinline></video>
+    </div>
+  </div>
+
+  <!-- Right column: 3 fixed video slots -->
+  <div class="videos" id="videoSlots">
+    <!-- Slot 0 = Room creator (you) -->
+    <div class="video-slot" data-slot="0">
+      <video id="localVideo" autoplay playsinline muted></video>
+      <div class="placeholder">You</div>
+    </div>
+    <!-- Slot 1 & 2 = other participants -->
+    <div class="video-slot" data-slot="1">
+      <div class="placeholder">Waiting...</div>
+    </div>
+    <div class="video-slot" data-slot="2">
+      <div class="placeholder">Waiting...</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-wrapper">
+    <button class="toggle-btn" id="toggleBarBtn" type="button">
+      <i class="fas fa-chevron-left" id="toggleIcon"></i>
+    </button>
+
+    <div class="controlls" id="controlsBar">
+      <button class="but-con" id="Ai" title="AI">
+        <i class="fas fa-robot"></i>
+      </button>
+      <button class="but-con" id="shareNotesBtn" title="Share Notes">
+        <i class="fas fa-book"></i>
+      </button>
+      <button class="but-con callCenter" title="Call Center">
+        <i class="fas fa-phone"></i>
+      </button>
+      <button class="but-con" id="shareScreenBtn" title="Share Screen">
+        <i class="fas fa-desktop"></i>
+      </button>
+      <button class="but-con" id="Chat" title="chat">
+        <i class="fas fa-message"></i>
+      </button>
+      <button class="but-con" id="setting" title="Settings">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsOverlay">
+  <div id="settingsPanel">
+    <header>
+      <span><i class="fas fa-gear"></i> Room Permissions</span>
+      <button id="closeSettings"><i class="fas fa-times"></i></button>
+    </header>
+    <div id="settingsBody">
+      <div class="you-are-host" id="hostBanner" style="display:none">
+        You are the <strong>Room Creator</strong>. You can grant or revoke sharing permissions for participants.
+      </div>
+      <div class="perm-section">
+        <h4>Participants</h4>
+        <div id="permList"></div>
+      </div>
+      <p class="no-perm-msg" id="noPermMsg">Only the room creator can change permissions.</p>
+    </div>
+  </div>
+</div>
+
+<script src="../controlls/controlls.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const roomId = new URLSearchParams(window.location.search).get("room") || "default-room";
+
+const localVideo     = document.getElementById("localVideo");
+const shareNotesBtn  = document.getElementById("shareNotesBtn");
+const pdfInput       = document.getElementById("pdfFile");
+const pdfViewer      = document.getElementById("pdfViewer");
+const screenViewer   = document.getElementById("screenViewer");
+const shareScreenBtn = document.getElementById("shareScreenBtn");
+const settingBtn     = document.getElementById("setting");
+
+let localStream = null;
+let currentScreenStream = null;
+let isHost = false;
+let hostId = null;
+
+const peers = {};
+const remoteMedia = {};          // socketId → {video, audio, slot}
+const MAX_REMOTE_SLOTS = 2;
+let permissions = {};            // { [socketId]: { screen: bool, notes: bool } }
+
+const config = {
+  iceServers: [
+    { urls: "stun:stun.relay.metered.ca:80" },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "ddbaf0b8d0faa3e841f1fc5d",
+      credential: "sYhaMzJqs7PGMRs8",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "ddbaf0b8d0faa3e841f1fc5d",
+      credential: "sYhaMzJqs7PGMRs8",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "ddbaf0b8d0faa3e841f1fc5d",
+      credential: "sYhaMzJqs7PGMRs8",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "ddbaf0b8d0faa3e841f1fc5d",
+      credential: "sYhaMzJqs7PGMRs8",
+    },
+  ],
+};
+
+/* ---------- slot helpers ---------- */
+function getAvailableSlot() {
+  for (let i = 1; i <= MAX_REMOTE_SLOTS; i++) {
+    const slot = document.querySelector(`.video-slot[data-slot="${i}"]`);
+    if (slot && !slot.dataset.occupied) return slot;
+  }
+  return null;
+}
+
+function placeRemoteInSlot(id, stream) {
+  if (remoteMedia[id]) {
+    remoteMedia[id].video.srcObject = stream;
+    remoteMedia[id].audio.srcObject = stream;
+    return remoteMedia[id];
+  }
+
+  const slot = getAvailableSlot();
+  if (!slot) {
+    console.warn("No free slot for", id);
+    return null;
+  }
+
+  const ph = slot.querySelector(".placeholder");
+  if (ph) ph.remove();
+
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.playsInline = true;
+  video.muted = true;
+  video.srcObject = stream;
+
+  const audio = document.createElement("audio");
+  audio.autoplay = true;
+  audio.muted = false;
+  audio.style.display = "none";
+  audio.srcObject = stream;
+
+  slot.appendChild(video);
+  slot.appendChild(audio);
+  slot.dataset.occupied = id;
+
+  remoteMedia[id] = { video, audio, slot };
+  video.play().catch(() => {});
+  audio.play().catch(() => {});
+  return remoteMedia[id];
+}
+
+function removeRemoteFromSlot(id) {
+  const media = remoteMedia[id];
+  if (!media) return;
+
+  if (media.video) media.video.remove();
+  if (media.audio) media.audio.remove();
+
+  const slot = media.slot;
+  if (slot) {
+    delete slot.dataset.occupied;
+    slot.classList.remove("sharing");
+    const ph = document.createElement("div");
+    ph.className = "placeholder";
+    ph.textContent = "Waiting...";
+    slot.appendChild(ph);
+  }
+
+  delete remoteMedia[id];
+  delete permissions[id];
+  renderPermissions();
+}
+
+/* ---------- replace video track (for screen share) ---------- */
+async function replaceVideoTrack(newTrack) {
+  for (const id in peers) {
+    const pc = peers[id];
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
+    if (sender) await sender.replaceTrack(newTrack);
+  }
+}
+
+/* ---------- media & WebRTC ---------- */
+async function requestMedia() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    localStream = stream;
+    localVideo.srcObject = stream;
+    localVideo.muted = true;
+    localVideo.play().catch(() => {});
+
+    const ph = localVideo.parentElement.querySelector(".placeholder");
+    if (ph) ph.style.display = "none";
+
+    socket.emit("join-room", roomId);
+  } catch (err) {
+    console.error(err);
+    alert("Please allow Camera and Microphone permissions.");
+  }
+}
+
+function createPeer(id) {
+  const pc = new RTCPeerConnection(config);
+
+  if (localStream) {
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  }
+
+  // if already screen-sharing, give the new peer the screen track
+  if (currentScreenStream) {
+    const screenTrack = currentScreenStream.getVideoTracks()[0];
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
+    if (sender && screenTrack) sender.replaceTrack(screenTrack);
+  }
+
+  pc.ontrack = (event) => {
+    const stream = event.streams && event.streams[0];
+    if (!stream) return;
+    placeRemoteInSlot(id, stream);
+  };
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit("ice-candidate", {
+        to: id,
+        candidate: event.candidate,
+      });
+    }
+  };
+
+  return pc;
+}
+
+socket.on("existing-users", async (users) => {
+  for (const id of users) {
+    if (id === socket.id) continue;
+    const pc = createPeer(id);
+    peers[id] = pc;
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit("offer", { to: id, offer });
+  }
+});
+
+socket.on("user-joined", (id) => {
+  if (peers[id]) return;
+  peers[id] = createPeer(id);
+
+  if (isHost) {
+    permissions[id] = { screen: false, notes: false };
+    broadcastPermissions();
+    renderPermissions();
+  }
+});
+
+socket.on("offer", async ({ from, offer }) => {
+  const pc = createPeer(from);
+  peers[from] = pc;
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit("answer", { to: from, answer });
+});
+
+socket.on("answer", async ({ from, answer }) => {
+  if (peers[from]) {
+    await peers[from].setRemoteDescription(new RTCSessionDescription(answer));
+  }
+});
+
+socket.on("ice-candidate", async ({ from, candidate }) => {
+  if (peers[from]) {
+    try {
+      await peers[from].addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+});
+
+socket.on("user-left", (id) => {
+  if (peers[id]) {
+    peers[id].close();
+    delete peers[id];
+  }
+  removeRemoteFromSlot(id);
+
+  if (id === hostId) {
+    isHost = true;
+    hostId = socket.id;
+    socket.emit("claim-host", { roomId });
+  }
+});
+
+/* ---------- HOST / PERMISSIONS ---------- */
+socket.on("host-info", ({ hostId: h }) => {
+  hostId = h;
+  isHost = (h === socket.id);
+  document.getElementById("hostBanner").style.display = isHost ? "block" : "none";
+  document.getElementById("noPermMsg").style.display = isHost ? "none" : "block";
+  renderPermissions();
+});
+
+socket.on("permissions-updated", (perms) => {
+  permissions = perms || {};
+  renderPermissions();
+});
+
+function broadcastPermissions() {
+  socket.emit("update-permissions", { roomId, permissions });
+}
+
+function canShareScreen() {
+  if (isHost) return true;
+  return !!(permissions[socket.id] && permissions[socket.id].screen);
+}
+
+function canShareNotes() {
+  if (isHost) return true;
+  return !!(permissions[socket.id] && permissions[socket.id].notes);
+}
+
+function renderPermissions() {
+  const list = document.getElementById("permList");
+  list.innerHTML = "";
+
+  // self
+  const selfRow = document.createElement("div");
+  selfRow.className = "perm-row";
+  selfRow.innerHTML = `
+    <div class="name">You ${isHost ? '<span class="host-badge">Host</span>' : ""}
+      <small>${socket.id ? socket.id.slice(0, 8) + "…" : ""}</small>
+    </div>
+    <div class="perm-toggles">
+      <label><input type="checkbox" disabled ${canShareScreen() ? "checked" : ""}> Screen</label>
+      <label><input type="checkbox" disabled ${canShareNotes() ? "checked" : ""}> Notes</label>
+    </div>`;
+  list.appendChild(selfRow);
+
+  // other participants
+  Object.keys(remoteMedia).forEach((id) => {
+    const p = permissions[id] || { screen: false, notes: false };
+    const row = document.createElement("div");
+    row.className = "perm-row";
+    row.innerHTML = `
+      <div class="name">Participant
+        <small>${id.slice(0, 8)}…</small>
+      </div>
+      <div class="perm-toggles">
+        <label>
+          <input type="checkbox" data-id="${id}" data-type="screen"
+                 ${p.screen ? "checked" : ""} ${isHost ? "" : "disabled"}>
+          Screen
+        </label>
+        <label>
+          <input type="checkbox" data-id="${id}" data-type="notes"
+                 ${p.notes ? "checked" : ""} ${isHost ? "" : "disabled"}>
+          Notes
+        </label>
+      </div>`;
+    list.appendChild(row);
+  });
+
+  if (isHost) {
+    list.querySelectorAll('input[type="checkbox"][data-id]').forEach((cb) => {
+      cb.onchange = () => {
+        const id = cb.dataset.id;
+        const type = cb.dataset.type;
+        if (!permissions[id]) permissions[id] = { screen: false, notes: false };
+        permissions[id][type] = cb.checked;
+        broadcastPermissions();
+      };
+    });
+  }
+}
+
+/* ---------- SETTINGS UI ---------- */
+settingBtn.addEventListener("click", () => {
+  renderPermissions();
+  document.getElementById("settingsOverlay").classList.add("open");
+});
+document.getElementById("closeSettings").onclick = () => {
+  document.getElementById("settingsOverlay").classList.remove("open");
+};
+document.getElementById("settingsOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "settingsOverlay") {
+    e.target.classList.remove("open");
+  }
+});
+
+/* ---------- PDF / NOTES SHARE ---------- */
+function showPdf(dataUrl) {
+  const resolved = typeof dataUrl === "string" ? dataUrl : (dataUrl?.dataUrl || "");
+  if (!resolved) {
+    pdfViewer.src = "about:blank";
+    return;
+  }
+  screenViewer.style.display = "none";
+  pdfViewer.style.display = "block";
+  pdfViewer.src = resolved;
+  pdfViewer.onerror = () => {
+    pdfViewer.src = "about:blank";
+    window.open(resolved, "_blank");
+  };
+}
+
+shareNotesBtn.addEventListener("click", () => {
+  if (!canShareNotes()) {
+    alert("You do not have permission to share notes.\nAsk the room creator to enable it for you in Settings.");
+    return;
+  }
+  pdfInput.click();
+});
+
+pdfInput.addEventListener("change", function () {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    alert("Please choose a PDF.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const noteData = {
+      fileName: file.name,
+      mimeType: file.type,
+      dataUrl: reader.result,
+    };
+    socket.emit("share-notes", { roomId, noteData });
+    showPdf(noteData.dataUrl);
+  };
+  reader.onerror = () => alert("This PDF could not be loaded. Try a smaller file.");
+  reader.readAsDataURL(file);
+});
+
+socket.on("room-state", ({ notes, hostId: h, permissions: perms }) => {
+  if (notes) showPdf(notes.dataUrl);
+  if (h) {
+    hostId = h;
+    isHost = (h === socket.id);
+  }
+  if (perms) permissions = perms;
+
+  document.getElementById("hostBanner").style.display = isHost ? "block" : "none";
+  document.getElementById("noPermMsg").style.display = isHost ? "none" : "block";
+  renderPermissions();
+});
+
+socket.on("notes-updated", (noteData) => {
+  if (noteData) showPdf(noteData.dataUrl);
+});
+
+/* ---------- SCREEN SHARE ---------- */
+function stopLocalScreenShare() {
+  if (!currentScreenStream) return;
+
+  currentScreenStream.getTracks().forEach((t) => t.stop());
+  currentScreenStream = null;
+
+  if (localStream) {
+    const camTrack = localStream.getVideoTracks()[0];
+    if (camTrack) replaceVideoTrack(camTrack);
+    localVideo.srcObject = localStream;
+  }
+
+  screenViewer.srcObject = null;
+  screenViewer.style.display = "none";
+  pdfViewer.style.display = "block";
+  document.querySelector('.video-slot[data-slot="0"]').classList.remove("sharing");
+}
+
+shareScreenBtn.addEventListener("click", async () => {
+  try {
+    if (currentScreenStream) {
+      stopLocalScreenShare();
+      socket.emit("screen-share-state", { roomId, active: false, from: socket.id });
+      return;
+    }
+
+    if (!canShareScreen()) {
+      alert("You do not have permission to share your screen.\nAsk the room creator to enable it for you in Settings.");
+      return;
+    }
+
+    currentScreenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: true,
+    });
+
+    const screenTrack = currentScreenStream.getVideoTracks()[0];
+
+    // show in big ViewPoint
+    pdfViewer.style.display = "none";
+    screenViewer.style.display = "block";
+    screenViewer.srcObject = currentScreenStream;
+
+    // send to peers
+    await replaceVideoTrack(screenTrack);
+
+    document.querySelector('.video-slot[data-slot="0"]').classList.add("sharing");
+    socket.emit("screen-share-state", { roomId, active: true, from: socket.id });
+
+    screenTrack.onended = () => {
+      stopLocalScreenShare();
+      socket.emit("screen-share-state", { roomId, active: false, from: socket.id });
+    };
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+socket.on("screen-share-state", ({ active, from }) => {
+  if (from === socket.id) return;
+
+  if (active) {
+    const media = remoteMedia[from];
+    if (media && media.video && media.video.srcObject) {
+      pdfViewer.style.display = "none";
+      screenViewer.style.display = "block";
+      screenViewer.srcObject = media.video.srcObject;
+    }
+    if (media && media.slot) media.slot.classList.add("sharing");
+  } else {
+    screenViewer.srcObject = null;
+    screenViewer.style.display = "none";
+    pdfViewer.style.display = "block";
+    const media = remoteMedia[from];
+    if (media && media.slot) media.slot.classList.remove("sharing");
+  }
+});
+
+/* ---------- audio unlock ---------- */
+function enableRemoteAudio() {
+  Object.values(remoteMedia).forEach(({ audio }) => {
+    if (!audio) return;
+    audio.muted = false;
+    audio.play().catch(() => {});
+  });
+}
+document.body.addEventListener("click", () => enableRemoteAudio(), { once: true });
+
+requestMedia();
+
+/* ---------- Chat UI ---------- */
+const main = document.querySelector("main");
+document.getElementById("Chat").onclick = () => main.classList.add("chat-open");
+document.getElementById("closeChat").onclick = () => main.classList.remove("chat-open");
+</script>
+</body>
+</html>
