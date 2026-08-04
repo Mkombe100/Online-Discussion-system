@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,33 +20,20 @@
     }
 
     main{
-    display:grid;
-    width:100vw;
-    height:100vh;
-
-    grid-template-columns:minmax(0,1fr) 280px;
-
-    gap:8px;
-    padding:8px;
-
-    overflow:hidden;
+      display:grid;
+      grid-template-columns:0px 65rem 1fr;
+      width:100vw;height:100vh;
+      position:relative;transition:.3s;
     }
-    
     main.chat-open{
-        grid-template-columns:320px minmax(0,1fr) 280px;
+      grid-template-columns:320px minmax(0,1fr) 18rem;
     }
-    
+
     .ViewPoint{
-    display:flex;
-    flex-direction:column;
-
-    border:2px solid white;
-    border-radius:8px;
-
-    overflow:hidden;
-    min-height:0;
+      display:flex;flex-direction:column;
+      margin:8px;border:2px solid white;
+      overflow:hidden;border-radius:8px;
     }
-    
     #viewer{flex:1;position:relative;width:100%;height:100%}
     #pdfViewer,#screenViewer{
       width:100%;height:100%;border:none;display:block;
@@ -55,27 +43,20 @@
     }
 
     .videos{
-    display:grid;
-    grid-template-rows:repeat(3,1fr);
-
-    gap:8px;
-
-    height:100%;
-    min-height:0;
+      display:grid;
+      grid-template-rows:1fr 1fr 1fr;
+      height:100%;
+      padding:8px 8px 8px 0;
+      gap:8px;min-height:0;
     }
-    
-   .video-slot{
-    overflow:hidden;
-    border:2px solid greenyellow;
-    border-radius:8px;
+    .video-slot{
+      border:2px solid greenyellow;
+      border-radius:8px;overflow:hidden;
+      background:#000;position:relative;min-height:0;
     }
-    
     .video-slot video{
-        width:100%;
-        height:100%;
-        object-fit:cover;
+      width:100%;height:100%;object-fit:cover;display:block;
     }
-
     .video-slot .placeholder{
       position:absolute;inset:0;
       display:flex;align-items:center;justify-content:center;
