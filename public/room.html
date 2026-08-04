@@ -11,7 +11,7 @@
 	<link rel="stylesheet" href="../controlls/controlls.css">
   <link rel="stylesheet" type="text/css" href="demo.css">
   <style>
-  			*{
+			*{
 			margin:0;
 			padding:0;
 			box-sizing:border-box;
@@ -20,6 +20,7 @@
 		html,body{
 			width:100%;
 			height:100%;
+			/* allow small overflow if needed on very small viewports */
 			overflow:hidden;
 			background-image:url("../assets/abc.jpg");
 			background-repeat:no-repeat;
@@ -28,9 +29,11 @@
 			background-color:blue;
 		}
 
+		/* Main layout: left = chat (collapsed by default), center = room, right = controls */
 		main{
 	      display:grid;
-	      grid-template-columns:0px 65rem 1fr;
+	      /* default: chat collapsed (0), center takes remaining space, controls fixed */
+	      grid-template-columns: 0px minmax(0, 1fr) 18rem;
 	      width:100vw;
 	      height:100vh;
 	      position:relative;
@@ -39,7 +42,8 @@
 
 
 	  main.chat-open{
-	      grid-template-columns:320px minmax(0,1fr) 18rem;
+	      /* when chat open, give it a fixed width (responsive) */
+	      grid-template-columns: 320px minmax(0, 1fr) 18rem;
 	  }
 
 		.ViewPoint{
@@ -47,6 +51,7 @@
 			flex-direction:column;
 			margin:8px;
 			border:2px solid white;
+			min-width:0; /* allow shrinking inside grid */
 		}
 
 		.video{
@@ -57,6 +62,7 @@
 		#viewer{
 			flex:1;
 			position:relative;
+			min-height:0; /* important for children to scroll/fit */
 		}
 
 		#pdfViewer,
@@ -80,7 +86,9 @@
 
 		.videos{
 			display: grid;
+			/* stack videos on top of each other on narrow screens */
 			grid-template-rows: 14rem 14rem 1fr;
+			min-width:0;
 		}
 
 		.topVideo{
@@ -88,6 +96,7 @@
 			max-height:20rem;
 			margin:8px;
 			border:2px solid greenyellow;
+			min-width:0;
 		}
 
 		.downVideo{
@@ -110,7 +119,8 @@
       border: solid 2px green;
       margin-top: 8px;
       margin-bottom: 8px;
-   	}
+      min-width:0;
+    }
 
 
 	  main.chat-open #chatPanel{
@@ -163,6 +173,27 @@
 	    border-radius:8px;
 	    cursor:pointer;
 	}
+
+	/* Controls wrapper should not overflow horizontally */
+	.controls-wrapper{
+		padding:8px;
+	}
+
+	.controlls{
+		display:flex;
+		flex-direction:column;
+		gap:8px;
+	}
+
+	.but-con{
+		background:rgba(0,0,0,0.6);
+		color:white;
+		border:none;
+		padding:10px;
+		border-radius:8px;
+		cursor:pointer;
+	}
+
   </style>
 
 	</head>
@@ -207,8 +238,8 @@
 
 		<div id="viewer">
 
-			<!-- PDF -->
-			<iframe id="pdfViewer"></iframe>
+			<!-- PDF: use embed for more consistent in-browser rendering -->
+			<embed id="pdfViewer" type="application/pdf" style="display:block;" />
 
 			<!-- Screen Share -->
 			<video id="screenViewer" autoplay playsinline></video>
@@ -253,7 +284,7 @@
 			</button>
 
 			<!-- Call center -->
-			<button class="but-con"  class = "callCenter" title="Share Notes">
+			<button class="but-con callCenter" title="Call Center">
 				<i class="fas fa-phone"></i>
 			</button>
 
@@ -262,7 +293,7 @@
 				<i class="fas fa-desktop"></i>
 			</button>
 
-			<!-- Share Screen -->
+			<!-- Chat -->
 			<button class="but-con" id="Chat" title="chat">
 				<i class="fas fa-message"></i>
 			</button>
@@ -305,13 +336,13 @@ async function requestMedia(){
 
 requestMedia();
 
-
 // =================== PDF ===================
 
 const shareNotesBtn=document.getElementById("shareNotesBtn");
 const pdfInput=document.getElementById("pdfFile");
 const pdfViewer=document.getElementById("pdfViewer");
 const screenViewer=document.getElementById("screenViewer");
+let currentPdfUrl = null;
 
 shareNotesBtn.addEventListener("click",()=>{
 
@@ -333,12 +364,27 @@ pdfInput.addEventListener("change",function(){
 
 	}
 
+	// Revoke previous URL if any
+	if(currentPdfUrl){
+		URL.revokeObjectURL(currentPdfUrl);
+		currentPdfUrl = null;
+	}
+
 	const url=URL.createObjectURL(file);
+	currentPdfUrl = url;
 
+	// Hide screen share
 	screenViewer.style.display="none";
-	pdfViewer.style.display="block";
+	if (screenViewer.srcObject) {
+		// stop any active screen tracks if present (we only show screen when sharing)
+		try{ screenViewer.srcObject.getTracks().forEach(t=>t.stop()); }catch(e){}
+		screenViewer.srcObject = null;
+	}
 
-	pdfViewer.src=url;
+	// Show PDF
+	pdfViewer.style.display="block";
+	// embed uses the src attribute
+	pdfViewer.src = url;
 
 });
 
@@ -346,16 +392,13 @@ pdfInput.addEventListener("change",function(){
 // =================== SCREEN SHARE ===================
 
 const shareScreenBtn=document.getElementById("shareScreenBtn");
+let screenStream = null;
 
-shareScreenBtn.addEventListener("click",async()=>{
-
+async function startScreenShare(){
 	try{
-
-		const stream=await navigator.mediaDevices.getDisplayMedia({
-
+		screenStream = await navigator.mediaDevices.getDisplayMedia({
 			video:true,
 			audio:true
-
 		});
 
 		// Hide PDF
@@ -363,22 +406,50 @@ shareScreenBtn.addEventListener("click",async()=>{
 
 		// Show Screen
 		screenViewer.style.display="block";
-		screenViewer.srcObject=stream;
+		screenViewer.srcObject = screenStream;
 
-		// Restore PDF after sharing stops
-		stream.getVideoTracks()[0].onended=function(){
-
-			screenViewer.srcObject=null;
-			screenViewer.style.display="none";
-
-			pdfViewer.style.display="block";
-
-		};
+		// When sharing stops from browser UI, clean up
+		screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+			stopScreenShare();
+		});
 
 	}catch(err){
-		console.log(err);
+		console.log('Screen share error', err);
+		// user may have cancelled or browser not supported
+	}
+}
+
+function stopScreenShare(){
+	if(!screenStream) return;
+
+	try{
+		screenStream.getTracks().forEach(track=>track.stop());
+	}catch(e){
+		console.warn('Error stopping screen tracks', e);
 	}
 
+	screenViewer.srcObject = null;
+	screenViewer.style.display = 'none';
+
+	// restore PDF if we have one
+	if(currentPdfUrl){
+		pdfViewer.style.display = 'block';
+		pdfViewer.src = currentPdfUrl;
+	} else {
+		// nothing to show
+		pdfViewer.style.display = 'none';
+	}
+
+	screenStream = null;
+}
+
+shareScreenBtn.addEventListener('click', async ()=>{
+	// Toggle behaviour: if already sharing stop, else start
+	if(screenStream){
+		stopScreenShare();
+	}else{
+		await startScreenShare();
+	}
 });
 
 //Chat interface
@@ -392,6 +463,13 @@ const main = document.querySelector("main");
       closeChat.onclick = ()=>{
           main.classList.remove("chat-open");
       };
+
+// Clean up object URL when leaving page
+window.addEventListener('beforeunload', ()=>{
+	if(currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
+	if(screenStream) stopScreenShare();
+});
+
 </script>
 
 </body>
