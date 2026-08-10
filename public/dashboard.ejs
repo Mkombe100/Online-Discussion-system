@@ -152,6 +152,34 @@
             position: relative;
         }
 
+        .fullscreen-btn {
+            width: 42px;
+            height: 42px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 50%;
+            cursor: pointer;
+        
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .fullscreen-btn:hover {
+            background: var(--surface-2);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+        
+        .fullscreen-btn:active {
+            transform: scale(0.95);
+        }
+
         .profile-btn {
             display: flex;
             align-items: center;
@@ -640,6 +668,14 @@
                 <p>Start a call or organize a group discussion</p>
             </div>
             <div class="topbar-right">
+                <!-- Fullscreen Button -->
+                <button class="fullscreen-btn"
+                        id="fullscreenBtn"
+                        type="button"
+                        onclick="toggleFullscreen()"
+                        title="Enter Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
                 <div class="profile-section">
                     <button class="profile-btn" onclick="toggleProfileMenu()">
                         <div class="profile-avatar" id="profileInitial"></div>
@@ -958,6 +994,62 @@ function openCreateRoomModal() {
     loadTheme();
     loadUserData();
     loadGroupsFromStorage();
+
+
+
+     function toggleFullscreen() {
+
+    if (!document.fullscreenElement) {
+
+        document.documentElement.requestFullscreen()
+            .then(() => {
+                updateFullscreenButton();
+            })
+            .catch(err => {
+                console.error("Fullscreen error:", err);
+            });
+
+    } else {
+
+        document.exitFullscreen()
+            .then(() => {
+                updateFullscreenButton();
+            })
+            .catch(err => {
+                console.error("Exit fullscreen error:", err);
+            });
+    }
+}
+
+
+function updateFullscreenButton() {
+
+    const btn = document.getElementById("fullscreenBtn");
+
+    if (!btn) return;
+
+    const icon = btn.querySelector("i");
+
+    if (document.fullscreenElement) {
+
+        icon.className = "fas fa-compress";
+        btn.title = "Exit Fullscreen";
+
+    } else {
+
+        icon.className = "fas fa-expand";
+        btn.title = "Enter Fullscreen";
+    }
+}
+
+
+// Detect when user presses Escape
+// or exits fullscreen through the browser.
+document.addEventListener("fullscreenchange", updateFullscreenButton);
+    
+
+
+
 </script>
 </body>
 </html>
