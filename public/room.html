@@ -230,6 +230,9 @@
       <button class="but-con" id="setting" title="Settings">
         <i class="fa-solid fa-gear"></i>
       </button>
+      <button class="but-con" id="fullscreenBtn" title="FullScreen" onclick="toggleFullscreen()">
+        <i class="fas fa-expand"></i>
+      </button>
     </div>
   </div>
 </main>
@@ -751,6 +754,70 @@ requestMedia();
 const main = document.querySelector("main");
 document.getElementById("Chat").onclick = () => main.classList.add("chat-open");
 document.getElementById("closeChat").onclick = () => main.classList.remove("chat-open");
+
+
+
+
+
+function toggleFullscreen() {
+
+    if (!document.fullscreenElement) {
+
+        document.documentElement.requestFullscreen()
+            .then(() => {
+                updateFullscreenButton();
+            })
+            .catch(err => {
+                console.error("Fullscreen error:", err);
+            });
+
+    } else {
+
+        document.exitFullscreen()
+            .then(() => {
+                updateFullscreenButton();
+            })
+            .catch(err => {
+                console.error("Exit fullscreen error:", err);
+            });
+    }
+}
+
+
+function updateFullscreenButton() {
+
+    const btn = document.getElementById("fullscreenBtn");
+
+    if (!btn) return;
+
+    const icon = btn.querySelector("i");
+
+    if (document.fullscreenElement) {
+
+        icon.className = "fas fa-compress";
+        btn.title = "Exit Fullscreen";
+
+    } else {
+
+        icon.className = "fas fa-expand";
+        btn.title = "Enter Fullscreen";
+    }
+}
+
+
+// Detect when user presses Escape
+// or exits fullscreen through the browser.
+document.addEventListener("fullscreenchange", updateFullscreenButton);
+
+
+
+
+
+
+
+
+
+  
 </script>
 </body>
 </html>
